@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>aivergunning.nl – Snelcheck</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Gratis eerste check: mag ik dit bouwen zonder vergunning? Vul uw adres in en ontvang de uitslag per mail.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: twee kolommen – links het formulier en de voortgang, rechts het resultaat en de mail zoals de klant hem krijgt. Kadaster-blauw, rustig, gegevens in mono. */
+:root{
+  --bg:#F4F6F8; --paper:#FFFFFF; --ink:#14202B; --mut:#5D6B78; --line:#DCE2E8;
+  --acc:#235A8C; --acc-soft:#E3EDF6;
+  --groen:#1F8A5B; --oranje:#C97714; --rood:#B8402C;
+  --groen-soft:#E1F3EA; --oranje-soft:#FBEEDC; --rood-soft:#F8E1DC;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F161D; --paper:#17212B; --ink:#E7EDF2; --mut:#93A3B2; --line:#2A3743;
+  --acc:#7FB3E3; --acc-soft:#1C2E3E;
+  --groen:#4CC28D; --oranje:#E7A04A; --rood:#E57B66;
+  --groen-soft:#163327; --oranje-soft:#3A2A14; --rood-soft:#3B1E18; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F161D; --paper:#17212B; --ink:#E7EDF2; --mut:#93A3B2; --line:#2A3743;
+  --acc:#7FB3E3; --acc-soft:#1C2E3E;
+  --groen:#4CC28D; --oranje:#E7A04A; --rood:#E57B66;
+  --groen-soft:#163327; --oranje-soft:#3A2A14; --rood-soft:#3B1E18; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--acc)}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.logo{font-weight:700;font-size:20px;letter-spacing:-.4px}.logo span{color:var(--acc)}
+.tabs{display:flex;gap:4px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:3px}
+.tabs button{border:0;background:none;font:500 13px var(--sans);color:var(--mut);padding:6px 14px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--acc);color:var(--paper)}
+.badge{font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--oranje);background:var(--oranje-soft);padding:3px 8px;border-radius:4px}
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:28px;margin-top:28px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.1;letter-spacing:-.8px;margin:0 0 10px;text-wrap:balance}
+.lead{color:var(--mut);max-width:46ch;margin:0 0 22px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:20px}
+form .veld{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;position:relative}
+label{font-weight:500;font-size:13px}
+.hint{font-size:12px;color:var(--mut)}
+input[type=text],input[type=email],input[type=number],select{font:15px var(--sans);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px 12px;width:100%}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.rij{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:420px){.rij{grid-template-columns:1fr}}
+.wensen{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+@media (max-width:520px){.wensen{grid-template-columns:repeat(2,1fr)}}
+.wensen input{position:absolute;opacity:0;pointer-events:none}
+.wensen label{display:flex;flex-direction:column;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:10px 6px;cursor:pointer;font-size:13px;text-align:center;background:var(--bg)}
+.wensen svg{width:30px;height:24px;stroke:currentColor;fill:none;stroke-width:1.6}
+.wensen input:checked+label{border-color:var(--acc);background:var(--acc-soft);color:var(--acc)}
+.wensen input:focus-visible+label{outline:2px solid var(--acc)}
+.sug{position:absolute;top:100%;left:0;right:0;z-index:5;background:var(--paper);border:1px solid var(--line);border-radius:6px;margin-top:2px;box-shadow:0 8px 24px rgba(0,0,0,.12);overflow:hidden}
+.sug button{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 12px;font:14px var(--sans);color:var(--ink);cursor:pointer}
+.sug button:hover,.sug button.on{background:var(--acc-soft)}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--mut);margin:4px 0 16px}
+.check input{margin-top:3px}
+.knop{width:100%;border:0;border-radius:8px;background:var(--acc);color:var(--paper);font:600 16px var(--sans);padding:13px;cursor:pointer}
+.knop:disabled{opacity:.55;cursor:progress}
+.fout{color:var(--rood);font-size:13px;min-height:1em;margin-top:8px}
+.stappen{list-style:none;padding:0;margin:18px 0 0;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.stappen li{min-width:0;display:flex;gap:10px;align-items:center;font-size:13px;color:var(--mut)}
+.stappen .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center}
+.stappen li.bezig .dot{border-color:var(--acc);border-top-color:transparent;animation:draai .8s linear infinite}
+.stappen li.klaar{color:var(--ink)}.stappen li.klaar .dot{background:var(--groen);border-color:var(--groen)}
+.stappen li.klaar .dot::after{content:"";width:6px;height:3px;border:2px solid var(--paper);border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.stappen .wat{font-family:var(--mono);font-size:12px;color:var(--mut);margin-left:auto;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
+@keyframes draai{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.stappen li.bezig .dot{animation:none}}
+/* resultaat */
+.res-kop{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.res-kop h2{margin:0;font-size:18px}
+.mono{font-family:var(--mono);font-size:12px;color:var(--mut)}
+.uitslag{display:flex;gap:16px;border-radius:10px;padding:16px 18px;border:1px solid var(--line)}
+.licht{display:flex;flex-direction:column;gap:5px;background:var(--ink);padding:6px;border-radius:8px;height:fit-content;flex:none}
+.licht i{width:16px;height:16px;border-radius:50%;background:#3A4652;display:block}
+.uitslag h3{margin:0 0 4px;font-size:20px;letter-spacing:-.3px}
+.uitslag p{margin:0}
+.uitslag .stap{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:14px}
+.s-groen{background:var(--groen-soft)}.s-groen h3{color:var(--groen)}
+.s-oranje{background:var(--oranje-soft)}.s-oranje h3{color:var(--oranje)}
+.s-rood{background:var(--rood-soft)}.s-rood h3{color:var(--rood)}
+.feiten{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:14px 0}
+@media (max-width:620px){.feiten{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.feiten div{background:var(--paper);padding:10px 12px}
+.feiten dt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+.feiten dd{margin:2px 0 0;font:500 15px var(--mono);font-variant-numeric:tabular-nums}
+.regels{margin:0;padding:0;list-style:none}
+.regels li{display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+@media (max-width:520px){.regels li{grid-template-columns:1fr;gap:2px}}
+.regels .t{color:var(--mut);font-weight:500}
+.zones{display:flex;height:26px;border-radius:5px;overflow:hidden;margin:8px 0 2px;border:1px solid var(--line)}
+.zones div{min-width:0;display:flex;align-items:center;justify-content:center;font:11px var(--mono);color:var(--ink);white-space:nowrap;overflow:hidden;padding:0 4px}
+.zone-pand{background:var(--ink);color:var(--paper)!important}
+.zone-tuin{background:var(--groen-soft)}.zone-waarde{background:repeating-linear-gradient(45deg,var(--oranje-soft) 0 6px,var(--paper) 6px 10px)}
+.zone-overig{background:var(--acc-soft)}
+.controle{margin:8px 0 0;padding-left:18px;font-size:14px}.controle li{margin-bottom:4px}
+h4{margin:18px 0 6px;font-size:14px}
+/* mail */
+.mail{margin-top:24px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper)}
+.mail-bar{display:flex;gap:8px;align-items:center;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--line);font-size:13px;color:var(--mut)}
+.mail-bar b{color:var(--ink)}
+.mail-kop{min-width:0;overflow-wrap:anywhere;padding:14px 18px;border-bottom:1px solid var(--line);font-size:13px;display:grid;gap:3px}
+.mail-kop .onderwerp{font-size:17px;font-weight:600;color:var(--ink)}
+.mail-body{overflow-wrap:anywhere;padding:18px;font-size:14px;max-width:640px}
+.mail-body .cta{display:inline-block;background:var(--acc);color:var(--paper);text-decoration:none;padding:9px 16px;border-radius:6px;font-weight:600;margin:6px 0 4px}
+.mail-acties{display:flex;gap:8px;flex-wrap:wrap;padding:0 18px 18px}
+.knop2{border:1px solid var(--line);background:var(--paper);color:var(--ink);font:500 13px var(--sans);padding:8px 12px;border-radius:6px;cursor:pointer}
+.leeg{color:var(--mut);text-align:center;padding:40px 20px}
+.voorbeeld-label{font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.voet{margin-top:28px;font-size:12px;color:var(--mut);max-width:80ch}
+/* beheer */
+table.log{width:100%;border-collapse:collapse;font-size:13px}
+table.log th,table.log td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+table.log th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.pill{font:500 11px var(--mono);padding:2px 7px;border-radius:999px}
+.pill.groen{background:var(--groen-soft);color:var(--groen)}.pill.oranje{background:var(--oranje-soft);color:var(--oranje)}.pill.rood{background:var(--rood-soft);color:var(--rood)}
+.scroll{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="logo">ai<span>vergunning</span>.nl</div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <span class="badge">Testversie</span>
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" id="tab-klant" data-view="klant">Klantkant</button>
+      <button role="tab" aria-selected="false" id="tab-beheer" data-view="beheer">Binnengekomen checks</button>
+    </div>
+  </div>
+</header>
+
+<section id="view-klant">
+<div class="grid">
+  <div>
+    <h1>Mag ik dit bouwen zonder vergunning?</h1>
+    <p class="lead">Vul uw adres en uw plan in. Binnen een minuut ziet u wat er op uw adres geldt, en de uitslag staat in uw mail.</p>
+    <form id="f" class="card" novalidate>
+      <div class="veld">
+        <label for="adres">Adres</label>
+        <input id="adres" type="text" autocomplete="off" placeholder="Straat, huisnummer en plaats" required>
+        <div id="sug" class="sug" hidden></div>
+      </div>
+      <div class="veld">
+        <span style="font-weight:500;font-size:13px">Wat wilt u bouwen?</span>
+        <div class="wensen" role="radiogroup">
+          <input type="radio" name="wens" id="w-uitbouw" value="uitbouw" checked><label for="w-uitbouw"><svg viewBox="0 0 30 24"><path d="M3 21V9l8-6 8 6v12M19 13h8v8H19M1 21h28"/></svg>Uitbouw</label>
+          <input type="radio" name="wens" id="w-opbouw" value="opbouw"><label for="w-opbouw"><svg viewBox="0 0 30 24"><path d="M6 21V10h14v11M6 10V4h14v6M2 21h26"/></svg>Opbouw</label>
+          <input type="radio" name="wens" id="w-dakkapel" value="dakkapel"><label for="w-dakkapel"><svg viewBox="0 0 30 24"><path d="M3 21V12L15 3l12 9v9M15 9h7v5h-7M1 21h28"/></svg>Dakkapel</label>
+          <input type="radio" name="wens" id="w-splitsing" value="splitsing"><label for="w-splitsing"><svg viewBox="0 0 30 24"><path d="M4 21V5h22v16M15 5v16M4 13h22M1 21h28"/></svg>Splitsen</label>
+        </div>
+      </div>
+      <div class="rij">
+        <div class="veld" id="v-diepte"><label for="diepte">Diepte uitbouw</label><input id="diepte" type="number" min="1" max="12" step="0.5" value="3"><span class="hint">in meters vanaf de achtergevel</span></div>
+        <div class="veld" id="v-dakvlak" hidden><label for="dakvlak">Welk dakvlak?</label><select id="dakvlak"><option value="achter">Achterkant</option><option value="voor">Voorkant (straat)</option><option value="zij">Zijkant</option></select></div>
+        <div class="veld"><label for="naam">Voornaam</label><input id="naam" type="text" autocomplete="given-name" placeholder="Bijv. Sanne"></div>
+      </div>
+      <div class="veld"><label for="email">E-mailadres</label><input id="email" type="email" autocomplete="email" placeholder="naam@voorbeeld.nl" required><span class="hint">Hier sturen we de uitslag naartoe.</span></div>
+      <label class="check"><input id="akkoord" type="checkbox"><span>Ik ga akkoord dat aivergunning.nl mijn adres en e-mail gebruikt om de check te maken, de uitslag te mailen en contact op te nemen. De mail wordt verzonden via FormSubmit.</span></label>
+      <button class="knop" id="knop" type="submit">Check mijn adres</button>
+      <div class="fout" id="fout" role="alert"></div>
+      <ol class="stappen" id="stappen" hidden>
+        <li data-s="adres"><span class="dot"></span>Adres zoeken<span class="wat"></span></li>
+        <li data-s="woning"><span class="dot"></span>Woning en perceel ophalen (Kadaster)<span class="wat"></span></li>
+        <li data-s="plan"><span class="dot"></span>Bestemmingsplan lezen<span class="wat"></span></li>
+        <li data-s="regels"><span class="dot"></span>Regels toepassen<span class="wat"></span></li>
+        <li data-s="mail"><span class="dot"></span>Mail versturen<span class="wat"></span></li>
+      </ol>
+    </form>
+    <p class="voet">Openbare bronnen: Kadaster (BAG en kadastrale kaart) en Ruimtelijke plannen via PDOK, plus de landelijke regels voor vergunningvrij bouwen. Het is een eerste indicatie, geen besluit. Nieuwe regels die gemeenten sinds 2024 in het omgevingsplan publiceren, staan er nog niet in.</p>
+  </div>
+
+  <div id="rechts">
+    <div class="card" id="resultaat"></div>
+    <div class="mail" id="mail"></div>
+  </div>
+</div>
+</section>
+
+<section id="view-beheer" hidden>
+  <div class="card" style="margin-top:28px">
+    <div class="res-kop"><h2>Binnengekomen checks</h2><div style="display:flex;gap:8px"><button class="knop2" id="csv">Exporteer CSV</button><button class="knop2" id="wis">Lijst leegmaken</button></div></div>
+    <p class="mono" style="margin-top:0">Zo ziet jouw kant eruit: elke check is een lead met adres, wens, uitslag en e-mail. In deze testversie blijft de lijst alleen in deze browser.</p>
+    <div class="scroll"><table class="log"><thead><tr><th>Tijd</th><th>Naam / e-mail</th><th>Adres</th><th>Wens</th><th>Uitslag</th><th>Duur</th></tr></thead><tbody id="logbody"></tbody></table></div>
+  </div>
+</section>
+</div>
+
+<script>
+// aivergunning.nl — snelcheck v0.1 (intern prototype, 20-10-2026)
+// Draait in een browser (fetch + CORS). Alleen openbare PDOK-bronnen, geen API-key nodig.
+// Gebruik: const res = await snelcheck({adres:'Essenlaan 149 Zwanenburg', wens:'uitbouw', diepte:3})
+// wens: 'uitbouw' | 'opbouw' | 'dakkapel' | 'splitsing'   opties: diepte (m), dakvlak ('achter'|'voor'|'zij')
+
+async function snelcheck(input) {
+  const stap = input.onStap || (() => {});
+  const CRS = 'http://www.opengis.net/def/crs/EPSG/0/28992';
+  const RP = 'https://service.pdok.nl/kadaster/ruimtelijke-plannen/wms/v1_0?';
+  const BAG = 'https://api.pdok.nl/kadaster/bag/ogc/v2/collections/';
+  const BRK = 'https://api.pdok.nl/kadaster/brk-kadastrale-kaart/ogc/v1/collections/perceel/items';
+  const RCE = 'https://service.pdok.nl/rce/ps-ch/wms/v1_0?';
+  const log = [];
+  const j = async (u) => { const r = await fetch(u); if (!r.ok) throw new Error(r.status + ' ' + u); return r.json(); };
+  const bboxQ = (x, y, d) => `bbox=${x - d},${y - d},${x + d},${y + d}&bbox-crs=${encodeURIComponent(CRS)}&crs=${encodeURIComponent(CRS)}`;
+
+  // ---------- geometrie-hulpjes ----------
+  const ringPip = (p, ring) => { let ins = false; for (let i = 0, k = ring.length - 1; i < ring.length; k = i++) { const [xi, yi] = ring[i], [xk, yk] = ring[k]; if (((yi > p[1]) !== (yk > p[1])) && (p[0] < (xk - xi) * (p[1] - yi) / (yk - yi) + xi)) ins = !ins; } return ins; };
+  const polyPip = (p, poly) => ringPip(p, poly[0]) && !poly.slice(1).some(h => ringPip(p, h));
+  const pip = (p, g) => !g ? false : g.type === 'Polygon' ? polyPip(p, g.coordinates) : g.type === 'MultiPolygon' ? g.coordinates.some(pl => polyPip(p, pl)) : false;
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1];
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1]];
+  const add = (a, b, t = 1) => [a[0] + b[0] * t, a[1] + b[1] * t];
+  const norm = (v) => { const l = Math.hypot(v[0], v[1]) || 1; return [v[0] / l, v[1] / l]; };
+  const r1 = (v) => Math.round(v * 10) / 10;
+  const outerRing = (g) => g.type === 'Polygon' ? g.coordinates[0] : g.coordinates[0][0];
+
+  // ---------- 1. adres ----------
+  const q = encodeURIComponent(input.adres);
+  const loc = (await j(`https://api.pdok.nl/bzk/locatieserver/search/v3_1/free?q=${q}&rows=1&fq=type:adres&fl=weergavenaam,centroide_rd,adresseerbaarobject_id,nummeraanduiding_id,gemeentenaam,postcode`)).response.docs[0];
+  if (!loc) return { fout: 'Adres niet gevonden' };
+  stap('adres', loc.weergavenaam);
+  const [X, Y] = loc.centroide_rd.match(/POINT\(([\d.]+) ([\d.]+)\)/).slice(1).map(Number);
+  const C = [X, Y];
+
+  // ---------- 2. BAG pand + verblijfsobject, BRK perceel ----------
+  const pandFc = await j(`${BAG}pand/items?f=json&${bboxQ(X, Y, 0.3)}`);
+  const pand = pandFc.features[0];
+  const vboFc = await j(`${BAG}verblijfsobject/items?f=json&${bboxQ(X, Y, 25)}&limit=200`);
+  const vbo = vboFc.features.find(f => f.properties.identificatie === loc.adresseerbaarobject_id);
+  let perceel = null;
+  try { perceel = (await j(`${BRK}?f=json&${bboxQ(X, Y, 0.3)}`)).features[0] || null; } catch (e) { log.push('BRK: ' + e.message); }
+
+  stap('woning', pand ? `Pand uit ${pand.properties.bouwjaar}` : 'Pand niet gevonden');
+  // ---------- 3. plankaart (Ruimtelijke plannen WMS, GetFeatureInfo op een raster) ----------
+  const LAYERS = 'enkelbestemming,dubbelbestemming,bouwvlak,maatvoering,gebiedsaanduiding,bouwaanduiding,functieaanduiding';
+  const fi = async (x, y, layers) => {
+    const p = new URLSearchParams({ service: 'WMS', version: '1.3.0', request: 'GetFeatureInfo', layers, query_layers: layers, styles: '', crs: 'EPSG:28992', bbox: `${x - 0.5},${y - 0.5},${x + 0.5},${y + 0.5}`, width: '3', height: '3', i: '1', j: '1', info_format: 'application/json', feature_count: '30' });
+    try { return (await j(RP + p)).features || []; } catch (e) { log.push('FI ' + e.message.slice(0, 60)); return []; }
+  };
+  const pts = [];
+  for (let dx = -18; dx <= 18; dx += 6) for (let dy = -18; dy <= 18; dy += 6) pts.push([X + dx, Y + dy]);
+  for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; pts.push([X + 28 * Math.cos(a), Y + 28 * Math.sin(a)]); }
+  const feats = new Map();
+  for (let i = 0; i < pts.length; i += 12) {
+    const res = await Promise.all(pts.slice(i, i + 12).map(p => fi(p[0], p[1], LAYERS)));
+    res.flat().forEach(f => { if (f.properties.historisch === '0' && !feats.has(f.id)) feats.set(f.id, f); });
+  }
+  const planFeats = await fi(X, Y, 'bestemmingsplangebied');
+  stap('plan', `${feats.size} kaartvlakken gelezen`);
+  const all = [...feats.values()];
+  const layerOf = (f) => f.id.split('.')[0];
+  const at = (p, layer) => all.filter(f => layerOf(f).startsWith(layer) && pip(p, f.geometry));
+
+  // hoofdplan = jongste plan met een enkelbestemming op het adrespunt
+  const enkelHier = at(C, 'enkelbestemming').sort((a, b) => (b.properties.datum || '').localeCompare(a.properties.datum || ''));
+  const hoofd = enkelHier[0];
+  if (!hoofd) return { fout: 'Geen bestemmingsplan gevonden op dit punt (mogelijk al nieuw omgevingsplan in het DSO).', adres: loc.weergavenaam };
+  const planId = hoofd.properties.plangebied;
+  const inPlan = (f) => f.properties.plangebied === planId;
+  const enkelAt = (p) => { const e = at(p, 'enkelbestemming'); return (e.find(inPlan) || e.sort((a, b) => (b.properties.datum || '').localeCompare(a.properties.datum || ''))[0]); };
+  const bouwvlakAt = (p) => at(p, 'bouwvlak').some(inPlan);
+  const dubbelAt = (p) => at(p, 'dubbelbestemming').map(f => f.properties.naam);
+
+  // ---------- 4. oriëntatie: waar ligt de straat? ----------
+  let voor = null, best = 1e9;
+  for (const f of all) {
+    if (layerOf(f) !== 'enkelbestemming' || !/^verkeer/i.test(f.properties.naam)) continue;
+    for (const p of pts) if (pip(p, f.geometry)) { const d = Math.hypot(p[0] - X, p[1] - Y); if (d < best) { best = d; voor = norm(sub(p, C)); } }
+  }
+  const ring = pand ? outerRing(pand.geometry) : null;
+  if (!voor) { voor = [0, -1]; log.push('Straatrichting niet gevonden; aangenomen'); }
+  // verfijnen: hoofdrichting van de gevels (gewogen hoek mod 90°), dan de as die het best bij de straatkant past
+  if (ring) {
+    let sx = 0, sy = 0;
+    for (let i = 1; i < ring.length; i++) { const e = sub(ring[i], ring[i - 1]); const L = Math.hypot(e[0], e[1]); const th = Math.atan2(e[1], e[0]) * 4; sx += L * Math.cos(th); sy += L * Math.sin(th); }
+    const th = Math.atan2(sy, sx) / 4; const axes = [[Math.cos(th), Math.sin(th)], [-Math.sin(th), Math.cos(th)]].flatMap(a => [a, [-a[0], -a[1]]]);
+    voor = axes.reduce((b, a) => dot(a, voor) > dot(b, voor) ? a : b);
+  }
+  const A = [-voor[0], -voor[1]]; // achter-richting
+  const Lr = [-A[1], A[0]];      // langs de gevel
+  // hartlijn door het midden van het perceel (anders door het adrespunt)
+  let H = C;
+  if (perceel) { const pr = outerRing(perceel.geometry).slice(0, -1); const pc = [pr.reduce((s, v) => s + v[0], 0) / pr.length, pr.reduce((s, v) => s + v[1], 0) / pr.length]; H = add(C, Lr, dot(sub(pc, C), Lr)); }
+
+  // ---------- 5. pand en bouwvlak langs de hartlijn ----------
+  const proj = ring ? ring.map(v => dot(sub(v, C), A)) : [0];
+  const front = Math.min(...proj), rear = Math.max(...proj);
+  const projL = ring ? ring.map(v => dot(sub(v, C), Lr)) : [0];
+  const breedte = Math.max(...projL) - Math.min(...projL);
+  // pand-oppervlak in bouwvlak (raster 0,5 m)
+  let nIn = 0, nTot = 0, tMinBuiten = null;
+  if (ring) {
+    for (let t = front; t <= rear; t += 0.5) for (let s = Math.min(...projL); s <= Math.max(...projL); s += 0.5) {
+      const p = add(add(C, A, t), Lr, s); if (!pip(p, pand.geometry)) continue; nTot++;
+      if (bouwvlakAt(p)) nIn++; else if (t > front + 1 && (tMinBuiten == null || t < tMinBuiten)) tMinBuiten = t;
+    }
+  }
+  const diepBuiten = tMinBuiten == null ? 0 : rear - tMinBuiten;
+  // profiel achter het pand: per 0,5 m bestemming/dubbel/bouwvlak
+  const profiel = [];
+  let bouwvlakTot = null;
+  // achtergevel op de hartlijn (werkt ook bij L-vormige panden en grote gebouwen)
+  // lijn door het adrespunt; valt die snel buiten het perceel, dan de hartlijn van het perceel
+  const rearOn = (O) => {
+    let last = null; if (ring) for (let t = front - 1; t <= rear + 1; t += 0.25) if (pip(add(O, A, t), pand.geometry)) last = t;
+    let eind = null; for (let t = front + 0.5; t <= rear + 1; t += 0.25) { const e = enkelAt(add(O, A, t)); if (!e || e.properties.naam !== hoofd.properties.naam) { eind = t; break; } }
+    return Math.min(last ?? rear, eind ?? 1e9);
+  };
+  const meet = (O) => {
+    const r0 = rearOn(O), pr = []; let bt = null;
+    for (let t = r0 + 0.25; t <= r0 + 30; t += 0.5) {
+      const p = add(O, A, t);
+      if (perceel && !pip(p, perceel.geometry)) break;
+      const e = enkelAt(p); const bv = bouwvlakAt(p);
+      if (bv) bt = t - r0;
+      pr.push({ t: r1(t - r0), b: e ? e.properties.naam : '?', d: dubbelAt(p).join(' + '), bv });
+    }
+    return { pr, bt };
+  };
+  let m1 = meet(C); if (m1.pr.length < 6 && perceel) { const m2 = meet(H); if (m2.pr.length > m1.pr.length) m1 = m2; }
+  profiel.push(...m1.pr); bouwvlakTot = m1.bt;
+  const zones = []; for (const s of profiel) { const z = zones[zones.length - 1]; const key = s.b + '|' + s.d; if (z && z.key === key) z.tot = s.t + 0.25; else zones.push({ key, bestemming: s.b, dubbel: s.d, van: r1(s.t - 0.25), tot: r1(s.t + 0.25) }); }
+
+  // ---------- 6. achtererfgebied (raster op perceel) ----------
+  let achtererf = null, perceelOpp = null;
+  if (perceel) {
+    perceelOpp = perceel.properties.kadastrale_grootte_waarde;
+    const pr = outerRing(perceel.geometry); const xs = pr.map(v => v[0]), ys = pr.map(v => v[1]);
+    let n = 0; for (let x = Math.min(...xs); x <= Math.max(...xs); x += 0.5) for (let y = Math.min(...ys); y <= Math.max(...ys); y += 0.5) {
+      const p = [x, y]; if (!pip(p, perceel.geometry)) continue; if (pand && pip(p, pand.geometry)) continue;
+      if (dot(sub(p, C), A) > front + 1) n++;
+    }
+    achtererf = Math.round(n * 0.25);
+  }
+  const maxBijb = (bg) => bg == null ? null : bg <= 100 ? 0.5 * bg : bg <= 300 ? 50 + 0.2 * (bg - 100) : Math.min(150, 90 + 0.1 * (bg - 300));
+
+  // ---------- 7. aanduidingen, maatvoering, monument ----------
+  const uniq = (a) => [...new Set(a)];
+  const hier = all.filter(f => pip(C, f.geometry));
+  const maat = hier.filter(f => layerOf(f) === 'maatvoering').map(f => f.properties.maatvoering);
+  const gebied = uniq(hier.filter(f => layerOf(f).startsWith('gebiedsaanduiding')).map(f => f.properties.naam));
+  const dubbelPand = uniq(hier.filter(f => layerOf(f) === 'dubbelbestemming').map(f => f.properties.naam));
+  const dubbelAchter = uniq(profiel.slice(0, 16).flatMap(s => s.d ? s.d.split(' + ') : []));
+  const aanduiding = uniq(hier.filter(f => /aanduiding/.test(layerOf(f)) && !layerOf(f).startsWith('gebied')).map(f => f.properties.naam));
+  let monument = null;
+  try {
+    const p = new URLSearchParams({ service: 'WMS', version: '1.3.0', request: 'GetFeatureInfo', layers: 'PS.ProtectedSite', query_layers: 'PS.ProtectedSite', styles: '', crs: 'EPSG:28992', bbox: `${X - 0.5},${Y - 0.5},${X + 0.5},${Y + 0.5}`, width: '3', height: '3', i: '1', j: '1', info_format: 'application/json', feature_count: '10' });
+    const r = await j(RCE + p); monument = (r.features || []).map(f => f.properties);
+  } catch (e) { log.push('RCE: ' + e.message.slice(0, 60)); }
+
+  const plan = planFeats.find(f => f.properties.identificatie === planId) || {};
+  const tekstUrl = (n) => (all.find(f => f.properties.naam === n && f.properties.verwijzingnaartekst) || {}).properties?.verwijzingnaartekst?.split(',')[0] || '';
+  const feiten = {
+    adres: loc.weergavenaam, gemeente: loc.gemeentenaam, rd: [r1(X), r1(Y)],
+    bag: { pand: pand?.properties.identificatie, bouwjaar: pand?.properties.bouwjaar, vbo: vbo?.properties.identificatie, gebruiksdoel: vbo?.properties.gebruiksdoel, oppervlakte: vbo?.properties.oppervlakte, vboInPand: pand?.properties.aantal_verblijfsobjecten, toevoeging: vbo?.properties.toevoeging || vbo?.properties.huisletter || null },
+    perceel: perceel ? { nr: `${perceel.properties.kadastrale_gemeente_waarde} ${perceel.properties.sectie} ${perceel.properties.perceelnummer}`, opp: perceelOpp } : null,
+    pand: { diepte: r1(rear - front), breedte: r1(breedte), inBouwvlak: nTot ? Math.round(100 * nIn / nTot) : null, diepteBuitenBouwvlak: r1(diepBuiten) },
+    plan: { id: planId, naam: plan.properties?.naam || hoofd.properties.dossierid, datum: hoofd.properties.datum, status: hoofd.properties.dossierstatus, regels: (plan.properties?.verwijzingnaartekst || '').split(',').find(u => /Index|r_.*\.html/.test(u)) || '' },
+    bestemming: hoofd.properties.naam, bestemmingTekst: hoofd.properties.verwijzingnaartekst,
+    maatvoering: maat, gebiedsaanduidingen: gebied, aanduidingen: aanduiding, dubbelPand, dubbelAchter,
+    zonesAchter: zones.map(z => ({ bestemming: z.bestemming, dubbel: z.dubbel, van: z.van, tot: z.tot })),
+    bouwvlakLooptDoorAchterPand: bouwvlakTot == null ? 0 : r1(bouwvlakTot),
+    achtererf, maxBijbehorend: achtererf == null ? null : Math.round(maxBijb(achtererf)),
+    monument, straatRichting: voor.map(r1), log
+  };
+  return { feiten, beoordeling: beoordeel(feiten, input) };
+}
+
+// ---------- beslisregels (los te testen) ----------
+function beoordeel(F, w) {
+  const nl = (v) => String(v).replace('.', ',');
+  const regels = [], controle = [];
+  const beschermd = F.gebiedsaanduidingen.some(n => /beschermd|stads- of dorpsgezicht|dorpsgezicht|stadsgezicht/i.test(n)) || (F.monument || []).length > 0;
+  const waardeAchter = F.dubbelAchter.filter(n => /waarde|landschap|cultuurhistorie|groen/i.test(n));
+  const waardePand = F.dubbelPand.filter(n => /cultuurhistorie|monument/i.test(n));
+  const appartement = F.bag.toevoeging || (F.bag.vboInPand && F.bag.vboInPand > 1);
+  const eersteZone = F.zonesAchter[0];
+  const achterOk = eersteZone && /wonen|tuin|erf/i.test(eersteZone.bestemming);
+  const plan = `${F.plan.naam} (${F.plan.datum})`;
+  regels.push({ titel: 'Geldend plan', tekst: `${plan}, bestemming ${F.bestemming}. Sinds 1-1-2024 tijdelijk deel van het omgevingsplan.`, bron: F.bestemmingTekst });
+  if (F.maatvoering.length) regels.push({ titel: 'Maatvoering', tekst: F.maatvoering.join('; ').replace(/"/g, ''), bron: '' });
+  if (beschermd) controle.push('Monument of beschermd stads-/dorpsgezicht: vergunningvrij bouwen is dan beperkt of uitgesloten.');
+  if (waardeAchter.length) controle.push(`Achter de woning ligt een dubbelbestemming (${waardeAchter.join(', ')}): het plan kan bouwen in de tuin beperken of uitsluiten.`);
+  if (waardePand.length) controle.push(`Op het pand ligt ${waardePand.join(', ')}: let op cultuurhistorische waarden.`);
+  if (appartement) controle.push('Appartementsrecht of meerdere woningen in het pand: toestemming VvE / splitsingsakte nodig.');
+  controle.push('Oorspronkelijke achtergevel en eerdere aan-/uitbouwen: uit de archieftekeningen.');
+  if (/amsterdam/i.test(F.gemeente)) controle.push('Amsterdam: groen dak met waterberging (Hemelwaterverordening) en eventuele beleidsregels van het stadsdeel.');
+  if (F.gebiedsaanduidingen.some(n => /overige zone/i.test(n))) controle.push(`Gebiedsaanduiding ${F.gebiedsaanduidingen.filter(n => /overige zone/i.test(n)).join(', ')}: betekenis nalezen in de planregels (bijv. kelders, grondwater).`);
+
+  let stoplicht = 'oranje', kop = '', tekst = '', stap = '';
+  const wens = (w.wens || '').toLowerCase();
+  if (wens === 'uitbouw') {
+    const d = Number(w.diepte || 4);
+    const opp = Math.round(d * F.pand.breedte);
+    regels.push({ titel: 'Vergunningvrij (landelijk)', tekst: 'Aan- of uitbouw in het achtererfgebied, binnen 4 m van de oorspronkelijke achtergevel: 1 bouwlaag, max. 0,3 m boven de 1e verdiepingsvloer, max. 5 m hoog (bruidsschat art. 22.27/22.36, Bbl art. 2.29).', bron: 'https://iplo.nl/thema/bouw/bouwen-vergunning-melding/bijbehorende-bouwwerken/stappenplan-bepaling-vergunningvrij-bouwen' });
+    if (F.maxBijbehorend != null) regels.push({ titel: 'Maximale oppervlakte', tekst: `Achtererfgebied ca. ${F.achtererf} m² → max. ca. ${F.maxBijbehorend} m² aan bijbehorende bouwwerken (incl. bestaande schuur/aanbouw). Gevraagd: ca. ${opp} m².`, bron: '' });
+    const wz = F.zonesAchter.filter(z => /waarde|landschap|cultuurhistorie|groen/i.test(z.dubbel + ' ' + z.bestemming));
+    const waardeVanaf = wz.length ? Math.min(...wz.map(z => z.van)) : null;
+    if (waardeVanaf != null && waardeVanaf > 0) regels.push({ titel: 'Strook achter de woning', tekst: `De eerste ca. ${nl(waardeVanaf)} m achter de woning heeft geen extra waarde-regel; daarachter ${wz[0].dubbel || wz[0].bestemming}.`, bron: '' });
+    const raaktWaarde = waardeVanaf != null && waardeVanaf < d;
+    if (beschermd || raaktWaarde || !achterOk) {
+      stoplicht = 'oranje'; kop = 'Uitzoeken: mogelijk vergunning nodig';
+      tekst = 'De uitbouw ligt in een gebied waar extra regels gelden. Vergunningvrij bouwen is daar niet vanzelfsprekend.';
+      stap = 'Wij lezen de planregels voor dit perceel na en geven aan welke route past.';
+    } else if (d <= 4 && (F.maxBijbehorend == null || opp <= F.maxBijbehorend)) {
+      stoplicht = 'groen'; kop = 'Waarschijnlijk vergunningvrij';
+      tekst = `Een uitbouw van ca. ${nl(d)} m diep aan de achterkant valt naar verwachting onder vergunningvrij bouwen, mits 1 bouwlaag en niet hoger dan 0,3 m boven de verdiepingsvloer.`;
+      stap = 'Laat de oorspronkelijke achtergevel en de maten controleren; vergunningvrij betekent wel dat het Bbl (constructie, brand, energie) geldt.';
+    } else {
+      stoplicht = 'oranje'; kop = 'Vergunning waarschijnlijk nodig';
+      tekst = d > 4 ? `Dieper dan 4 m gelden strengere regels (max. 3 m hoog, alleen bijgebruik). Een uitbouw van ${nl(d)} m vraagt waarschijnlijk een vergunning.` : 'De gevraagde oppervlakte is groter dan wat vergunningvrij mag.';
+      stap = F.bouwvlakLooptDoorAchterPand >= d ? `Het bouwvlak loopt nog ca. ${nl(F.bouwvlakLooptDoorAchterPand)} m door: binnen het plan is een vergunning dan kansrijk.` : 'Toetsing aan de afwijkingsregels van het plan; vaak kansrijk met een goede motivering.';
+    }
+  } else if (wens === 'opbouw') {
+    stoplicht = 'oranje'; kop = 'Vergunning nodig';
+    regels.push({ titel: 'Altijd vergunningplichtig', tekst: 'Een opbouw (extra bouwlaag) is nooit vergunningvrij: technische bouwactiviteit en meestal ook omgevingsplanactiviteit.', bron: '' });
+    if (F.pand.inBouwvlak != null && F.pand.inBouwvlak < 95) {
+      tekst = `Ca. ${100 - F.pand.inBouwvlak}% van de woning (ca. ${nl(F.pand.diepteBuitenBouwvlak)} m diep) ligt buiten het bouwvlak. Een opbouw op dat deel vraagt een afwijking van het plan.`;
+      stap = 'Wij zoeken de afwijkingsregel op (vaak tot 6 m bij plat dak) en beoordelen de kans.';
+    } else {
+      tekst = 'De woning ligt binnen het bouwvlak. Een opbouw past planologisch als de maximale goot- en bouwhoogte niet wordt overschreden.';
+      stap = 'Bestaande hoogtes uit het archief halen en het ontwerp binnen de maatvoering houden; dan is het een reguliere aanvraag.';
+    }
+    controle.push('Constructie: kan de bestaande woning een extra laag dragen? Constructeur nodig.');
+  } else if (wens === 'dakkapel') {
+    const dv = (w.dakvlak || 'achter').toLowerCase();
+    regels.push({ titel: 'Vergunningvrij (landelijk)', tekst: 'Dakkapel in het achterdakvlak of een zijdakvlak niet naar de straat: plat dak, max. 1,75 m hoog, onderkant 0,5–1 m boven de dakvoet, bovenkant > 0,5 m onder de nok, zijkanten > 0,5 m van de dakranden (Bbl art. 2.29).', bron: 'https://iplo.nl/thema/bouw/bouwen-vergunning-melding/dakkapel/' });
+    if (beschermd) { stoplicht = 'oranje'; kop = 'Uitzoeken: beschermd gebied'; tekst = 'In een beschermd stads- of dorpsgezicht of bij een monument is een dakkapel meestal vergunningplichtig.'; stap = 'Wij controleren de status en de welstandseisen.'; }
+    else if (dv === 'achter') { stoplicht = 'groen'; kop = 'Waarschijnlijk vergunningvrij'; tekst = 'Een dakkapel aan de achterkant is vergunningvrij als hij binnen de landelijke maten blijft.'; stap = 'Maten van het dakvlak controleren (dakvoet, nok, zijkanten).'; }
+    else { stoplicht = 'oranje'; kop = 'Vergunning waarschijnlijk nodig'; tekst = 'Aan de voorkant of een zijkant naar de straat is een dakkapel alleen vergunningvrij in een welstandsvrij gebied.'; stap = 'Wij toetsen aan het omgevingsplan en de welstandsnota.'; }
+  } else if (wens === 'splitsing') {
+    stoplicht = /wonen/i.test(F.bestemming) ? 'oranje' : 'rood';
+    kop = stoplicht === 'rood' ? 'Lastig: geen woonbestemming' : 'Maatwerk: gemeentelijke regels';
+    tekst = `Woning van ca. ${F.bag.oppervlakte} m² (BAG). Splitsen vraagt meestal een vergunning (omgevingsplan / huisvestingsverordening) en een splitsingstekening; de regels verschillen sterk per gemeente.`;
+    stap = `Wij zoeken het splitsingsbeleid van ${F.gemeente} op en toetsen de minimale woninggrootte.`;
+    controle.push('Splitsingsbeleid en minimale oppervlakte per woning (gemeente).');
+  } else { stoplicht = 'oranje'; kop = 'Maatwerk'; tekst = 'Voor deze wens is geen standaardcheck; wij kijken persoonlijk.'; stap = 'Neem contact op.'; }
+
+  if (F.zonesAchter.length) regels.push({ titel: 'Achter de woning', tekst: F.zonesAchter.slice(0, 4).map(z => `${nl(z.van)}–${nl(z.tot)} m: ${z.bestemming}${z.dubbel ? ' + ' + z.dubbel : ''}`).join(' · '), bron: '' });
+  if (F.gebiedsaanduidingen.length) regels.push({ titel: 'Gebiedsaanduidingen', tekst: F.gebiedsaanduidingen.join(', '), bron: '' });
+  return { stoplicht, kop, tekst, stap, regels, controle };
+}
+
+</script>
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nl = v => String(v).replace('.', ',');
+const WENS = {uitbouw:'Uitbouw achterzijde', opbouw:'Opbouw (extra bouwlaag)', dakkapel:'Dakkapel', splitsing:'Woning splitsen'};
+const KLEUR = {groen:'var(--groen)', oranje:'var(--oranje)', rood:'var(--rood)'};
+const store = { get(){ try { return JSON.parse(localStorage.getItem('sc-log') || '[]'); } catch(e){ return []; } }, set(v){ try { localStorage.setItem('sc-log', JSON.stringify(v)); } catch(e){} } };
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x === b));
+  $('#view-klant').hidden = b.dataset.view !== 'klant';
+  $('#view-beheer').hidden = b.dataset.view !== 'beheer';
+  if (b.dataset.view === 'beheer') renderLog();
+}));
+
+/* ---------- wens ---------- */
+function wensUI(){ const w = document.querySelector('input[name=wens]:checked').value; $('#v-diepte').hidden = w !== 'uitbouw'; $('#v-dakvlak').hidden = w !== 'dakkapel'; }
+document.querySelectorAll('input[name=wens]').forEach(r => r.addEventListener('change', wensUI)); wensUI();
+
+/* ---------- adres-suggesties (PDOK Locatieserver) ---------- */
+let sugT, sugI = -1;
+$('#adres').addEventListener('input', e => {
+  clearTimeout(sugT); const q = e.target.value.trim(); if (q.length < 4) { $('#sug').hidden = true; return; }
+  sugT = setTimeout(async () => {
+    try {
+      const r = await fetch('https://api.pdok.nl/bzk/locatieserver/search/v3_1/suggest?rows=5&fq=type:adres&q=' + encodeURIComponent(q));
+      const d = (await r.json()).response.docs; sugI = -1;
+      $('#sug').innerHTML = d.map(x => `<button type="button">${esc(x.weergavenaam)}</button>`).join('');
+      $('#sug').hidden = !d.length;
+      $('#sug').querySelectorAll('button').forEach(b => b.addEventListener('mousedown', ev => { ev.preventDefault(); $('#adres').value = b.textContent; $('#sug').hidden = true; }));
+    } catch(err) { $('#sug').hidden = true; }
+  }, 220);
+});
+$('#adres').addEventListener('keydown', e => {
+  const items = [...$('#sug').querySelectorAll('button')]; if ($('#sug').hidden || !items.length) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); sugI = (sugI + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length; items.forEach((b,i) => b.classList.toggle('on', i === sugI)); }
+  if (e.key === 'Enter' && sugI >= 0) { e.preventDefault(); $('#adres').value = items[sugI].textContent; $('#sug').hidden = true; }
+  if (e.key === 'Escape') $('#sug').hidden = true;
+});
+$('#adres').addEventListener('blur', () => setTimeout(() => $('#sug').hidden = true, 150));
+
+/* ---------- voortgang ---------- */
+function stapZet(s, status, wat){ const li = document.querySelector(`#stappen li[data-s="${s}"]`); if (!li) return; li.className = status; if (wat != null) li.querySelector('.wat').textContent = wat; }
+function volgende(s){ const order = ['adres','woning','plan','regels','mail']; const i = order.indexOf(s); if (i < order.length - 1) stapZet(order[i+1], 'bezig'); }
+
+/* ---------- resultaat ---------- */
+function zonesBalk(F){
+  const z = F.zonesAchter.slice(0, 5); const tot = Math.max(8, ...z.map(x => x.tot));
+  const cls = x => /waarde|landschap|cultuur/i.test(x.dubbel) ? 'zone-waarde' : /tuin|wonen|erf/i.test(x.bestemming) ? 'zone-tuin' : 'zone-overig';
+  return `<div class="zones" aria-label="Strook achter de woning"><div class="zone-pand" style="flex:0 0 18%">woning</div>${z.map(x => `<div class="${cls(x)}" style="flex:${Math.max(.6, x.tot - x.van)}" title="${esc(x.bestemming + (x.dubbel ? ' + ' + x.dubbel : ''))}">${nl(x.van)}–${nl(x.tot)} m ${esc(x.dubbel ? x.dubbel.replace('Waarde - ', '') : x.bestemming)}</div>`).join('')}</div><div class="mono">Gemeten vanaf de achtergevel, langs de lijn door uw adres.</div>`;
+}
+function renderResultaat(F, B, w, ms){
+  const lampen = ['rood','oranje','groen'].map(k => `<i style="background:${k === B.stoplicht ? KLEUR[k] : ''}"></i>`).join('');
+  const wensTxt = WENS[w.wens] + (w.wens === 'uitbouw' ? `, ${nl(w.diepte)} m diep` : '') + (w.wens === 'dakkapel' ? `, ${w.dakvlak}kant` : '');
+  $('#resultaat').innerHTML = `
+    <div class="res-kop"><h2>${esc(F.adres)}</h2><span class="mono">${esc(wensTxt)} · ${nl((ms/1000).toFixed(1))} s</span></div>
+    <div class="uitslag s-${B.stoplicht}"><div class="licht">${lampen}</div><div><h3>${esc(B.kop)}</h3><p>${esc(B.tekst)}</p><p class="stap"><b>Volgende stap:</b> ${esc(B.stap)}</p></div></div>
+    <dl class="feiten">
+      <div><dt>Bouwjaar</dt><dd>${esc(F.bag.bouwjaar ?? '–')}</dd></div>
+      <div><dt>Woonoppervlak</dt><dd>${F.bag.oppervlakte ? F.bag.oppervlakte + ' m²' : '–'}</dd></div>
+      <div><dt>Perceel</dt><dd>${F.perceel ? F.perceel.opp + ' m²' : '–'}</dd></div>
+      <div><dt>Tuin achter</dt><dd>${F.achtererf != null ? '± ' + F.achtererf + ' m²' : '–'}</dd></div>
+    </dl>
+    ${F.zonesAchter.length ? '<h4>Wat ligt er achter uw woning</h4>' + zonesBalk(F) : ''}
+    <h4>Wat geldt er op uw adres</h4>
+    <ul class="regels">${B.regels.filter(r => !(F.zonesAchter.length && r.titel === 'Achter de woning')).map(r => `<li><span class="t">${esc(r.titel)}</span><span>${esc(r.tekst)}${r.bron ? ` <a href="${esc(r.bron)}" target="_blank" rel="noopener">bron</a>` : ''}</span></li>`).join('')}</ul>
+    <h4>Laat dit nog controleren</h4>
+    <ul class="controle">${B.controle.map(c => `<li>${esc(c)}</li>`).join('')}</ul>`;
+}
+function renderMail(F, B, w, email, naam){
+  const vn = naam || 'heer/mevrouw'; const aanhef = naam ? `Beste ${esc(naam)},` : 'Beste heer/mevrouw,';
+  const tijd = new Date().toLocaleString('nl-NL', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+  const onderwerp = `Uw snelcheck: ${B.kop.toLowerCase()} – ${F.adres.split(',')[0]}`;
+  const top = B.regels.filter(r => !/Achter de woning|Gebiedsaanduidingen/.test(r.titel)).slice(0, 4);
+  $('#mail').innerHTML = `
+    <div class="mail-bar"><svg viewBox="0 0 20 14" width="18" height="13" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="1" width="18" height="12" rx="1.5"/><path d="M1.5 2l8.5 6 8.5-6"/></svg><span><b>Inbox</b> van ${esc(email)}</span><span class="voorbeeld-label" style="margin-left:auto">voorbeeld van de mail</span></div>
+    <div class="mail-kop"><div class="onderwerp">${esc(onderwerp)}</div><div><b>Van:</b> aivergunning.nl &lt;check@aivergunning.nl&gt;</div><div><b>Aan:</b> ${esc(email)}</div><div class="mono">${esc(tijd)}</div></div>
+    <div class="mail-body">
+      <p>${aanhef}</p>
+      <p>Bedankt voor uw check. Voor <b>${esc(WENS[w.wens].toLowerCase())}</b> op <b>${esc(F.adres)}</b> is dit onze eerste inschatting:</p>
+      <div class="uitslag s-${B.stoplicht}" style="margin:12px 0"><div><h3>${esc(B.kop)}</h3><p>${esc(B.tekst)}</p></div></div>
+      <p><b>Wat geldt er:</b></p>
+      <ul>${top.map(r => `<li>${esc(r.titel)}: ${esc(r.tekst)}</li>`).join('')}</ul>
+      <p><b>Volgende stap:</b> ${esc(B.stap)}</p>
+      <p><a class="cta" href="#" onclick="return false">Plan een gratis belafspraak</a></p>
+      <p style="font-size:12px;color:var(--mut)">Dit is een automatische eerste indicatie op basis van openbare gegevens. Er kunnen geen rechten aan worden ontleend. Wilt u zekerheid, dan toetsen wij uw plan volledig en verzorgen we de aanvraag.</p>
+      <p>Met vriendelijke groet,<br>Casper Laan<br>aivergunning.nl</p>
+    </div>
+    <div class="mail-acties"><button class="knop2" id="kopieer">Kopieer mailtekst</button><button class="knop2" id="rapport">Open rapport om te printen</button></div>`;
+  $('#kopieer').addEventListener('click', async () => {
+    const t = $('#mail .mail-body').innerText;
+    try { await navigator.clipboard.writeText(onderwerp + '\n\n' + t); $('#kopieer').textContent = 'Gekopieerd'; } catch(e) { const r = document.createRange(); r.selectNodeContents($('#mail .mail-body')); getSelection().removeAllRanges(); getSelection().addRange(r); $('#kopieer').textContent = 'Geselecteerd, kopieer met Ctrl+C'; }
+  });
+  $('#rapport').addEventListener('click', () => {
+    const win = window.open('', '_blank'); if (!win) return;
+    win.document.write(`<!doctype html><html lang="nl"><head><meta charset="utf-8"><title>Snelcheck ${esc(F.adres)}</title><style>body{font:14px/1.5 system-ui,sans-serif;max-width:720px;margin:24px auto;padding:0 16px;color:#14202B}h1{font-size:20px}.u{border-left:5px solid ${B.stoplicht==='groen'?'#1F8A5B':B.stoplicht==='rood'?'#B8402C':'#C97714'};padding:8px 14px;background:#F4F6F8}li{margin-bottom:4px}</style></head><body><h1>aivergunning.nl · Snelcheck</h1><p><b>${esc(F.adres)}</b> · ${esc(WENS[w.wens])}</p><div class="u"><h2>${esc(B.kop)}</h2><p>${esc(B.tekst)}</p><p><b>Volgende stap:</b> ${esc(B.stap)}</p></div><h3>Wat geldt er</h3><ul>${B.regels.map(r=>`<li><b>${esc(r.titel)}:</b> ${esc(r.tekst)}</li>`).join('')}</ul><h3>Laat dit nog controleren</h3><ul>${B.controle.map(c=>`<li>${esc(c)}</li>`).join('')}</ul><p style="font-size:12px;color:#5D6B78">Automatische eerste indicatie op basis van openbare gegevens (Kadaster, Ruimtelijke plannen via PDOK). Geen rechten aan te ontlenen.</p><script>print()<\/script></body></html>`);
+    win.document.close();
+  });
+}
+function renderLeeg(){
+  $('#resultaat').innerHTML = `<div class="leeg"><div class="voorbeeld-label">Uitslag</div><p>Vul links een adres in. Hier verschijnt het stoplicht, wat er op het adres geldt en wat nog gecontroleerd moet worden.</p><p class="mono">Probeer bijvoorbeeld: Eksterstraat 45 Badhoevedorp, uitbouw 3 m</p></div>`;
+  $('#mail').innerHTML = `<div class="mail-bar"><svg viewBox="0 0 20 14" width="18" height="13" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="1" width="18" height="12" rx="1.5"/><path d="M1.5 2l8.5 6 8.5-6"/></svg><b>Inbox</b><span class="voorbeeld-label" style="margin-left:auto">hier komt de mail</span></div><div class="leeg">Na de check ziet u hier de mail die de klant krijgt.</div>`;
+}
+
+/* ---------- beheer ---------- */
+function renderLog(){
+  const log = store.get();
+  $('#logbody').innerHTML = log.length ? log.slice().reverse().map(r => `<tr><td class="mono">${esc(new Date(r.t).toLocaleString('nl-NL',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))}</td><td>${esc(r.naam || '')}<br><span class="mono">${esc(r.email)}</span></td><td>${esc(r.adres)}</td><td>${esc(r.wens)}${r.detail ? ' · ' + esc(r.detail) : ''}</td><td><span class="pill ${r.stoplicht}">${esc(r.stoplicht)}</span> ${esc(r.kop)}</td><td class="mono">${nl((r.ms/1000).toFixed(1))} s</td></tr>`).join('') : `<tr><td colspan="6" class="leeg">Nog geen checks. Doe er een op de klantkant.</td></tr>`;
+}
+$('#csv').addEventListener('click', () => {
+  const log = store.get(); const rows = [['tijd','naam','email','adres','gemeente','wens','detail','stoplicht','uitkomst','duur_s']].concat(log.map(r => [r.t, r.naam, r.email, r.adres, r.gemeente, r.wens, r.detail, r.stoplicht, r.kop, (r.ms/1000).toFixed(1)]));
+  const csv = rows.map(r => r.map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(';')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], {type:'text/csv'})); a.download = 'snelchecks.csv'; a.click();
+});
+$('#wis').addEventListener('click', () => { const b = $('#wis'); if (b.dataset.zeker) { store.set([]); renderLog(); b.textContent = 'Lijst leegmaken'; delete b.dataset.zeker; } else { b.dataset.zeker = 1; b.textContent = 'Klik nog eens om te wissen'; } });
+
+/* ---------- versturen ---------- */
+$('#f').addEventListener('submit', async e => {
+  e.preventDefault(); $('#fout').textContent = '';
+  const adres = $('#adres').value.trim(), email = $('#email').value.trim(), naam = $('#naam').value.trim();
+  const wens = document.querySelector('input[name=wens]:checked').value;
+  const w = { adres, wens, diepte: Number($('#diepte').value) || 3, dakvlak: $('#dakvlak').value };
+  if (adres.length < 5) return $('#fout').textContent = 'Vul een adres in met straat, huisnummer en plaats.';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return $('#fout').textContent = 'Vul een geldig e-mailadres in, daar sturen we de uitslag naartoe.';
+  if (!$('#akkoord').checked) return $('#fout').textContent = 'Vink aan dat we uw gegevens voor de check mogen gebruiken.';
+  $('#knop').disabled = true; $('#knop').textContent = 'Bezig met checken…';
+  $('#stappen').hidden = false; document.querySelectorAll('#stappen li').forEach(li => { li.className = ''; li.querySelector('.wat').textContent = ''; });
+  stapZet('adres', 'bezig');
+  const t0 = performance.now();
+  try {
+    const r = await snelcheck({ ...w, onStap: (s, wat) => { stapZet(s, 'klaar', wat); volgende(s); } });
+    if (r.fout) throw new Error(r.fout);
+    stapZet('regels', 'klaar', r.beoordeling.stoplicht); stapZet('mail', 'bezig');
+    const ms = performance.now() - t0;
+    renderResultaat(r.feiten, r.beoordeling, w, ms);
+    renderMail(r.feiten, r.beoordeling, w, email, naam);
+    let mailStatus = 'verstuurd';
+    try { await verstuur(r.feiten, r.beoordeling, w, email, naam); stapZet('mail', 'klaar', 'verstuurd naar ' + email); }
+    catch (mailErr) { mailStatus = 'niet verstuurd'; stapZet('mail', '', 'niet verstuurd'); $('#fout').textContent = 'De check is klaar, maar de mail kon niet worden verstuurd (' + mailErr.message + '). Hieronder staat hoe hij eruitziet.'; }
+    $('#mail .voorbeeld-label').textContent = mailStatus === 'verstuurd' ? 'verstuurd' : 'niet verstuurd – voorbeeld';
+    const log = store.get(); log.push({ t: Date.now(), naam, email, adres: r.feiten.adres, gemeente: r.feiten.gemeente, wens, detail: wens === 'uitbouw' ? w.diepte + ' m' : wens === 'dakkapel' ? w.dakvlak : '', stoplicht: r.beoordeling.stoplicht, kop: r.beoordeling.kop, ms, mail: mailStatus }); store.set(log);
+    if (window.innerWidth < 900) $('#rechts').scrollIntoView({ behavior: 'smooth' });
+  } catch (err) {
+    const net = /fetch|network/i.test(String(err));
+    $('#fout').textContent = net ? 'De kaartgegevens zijn nu niet bereikbaar. Open deze pagina in een gewone browser met internet en probeer het opnieuw.' : (err.message || 'Er ging iets mis bij de check.');
+    document.querySelectorAll('#stappen li.bezig').forEach(li => li.className = '');
+  } finally { $('#knop').disabled = false; $('#knop').textContent = 'Check mijn adres'; }
+});
+
+/* ---------- echt versturen (FormSubmit) ---------- */
+const MAIL_TO = 'bebd1bf77418ee08d6537b2013ba8a6e'; // FormSubmit-alias (geactiveerd 20-10-2026)
+function mailTekst(F, B, w, naam){
+  const top = B.regels.filter(r => !/Achter de woning|Gebiedsaanduidingen/.test(r.titel)).slice(0, 4);
+  return [`${naam ? 'Beste ' + naam : 'Beste heer/mevrouw'},`, '',
+    `Bedankt voor uw check. Voor ${WENS[w.wens].toLowerCase()} op ${F.adres} is dit onze eerste inschatting:`, '',
+    `UITSLAG: ${B.kop.toUpperCase()}`, B.tekst, '',
+    'Wat geldt er:', ...top.map(r => `- ${r.titel}: ${r.tekst}`), '',
+    `Volgende stap: ${B.stap}`, '',
+    'Laat dit nog controleren:', ...B.controle.map(c => `- ${c}`), '',
+    'Wilt u dat wij het verder uitzoeken of de aanvraag verzorgen? Beantwoord deze mail, dan plannen we een kort belmoment.', '',
+    'Dit is een automatische eerste indicatie op basis van openbare gegevens (Kadaster, Ruimtelijke plannen via PDOK). Er kunnen geen rechten aan worden ontleend.', '',
+    'Met vriendelijke groet,', 'Casper Laan', 'aivergunning.nl'].join('\n');
+}
+async function verstuur(F, B, w, email, naam){
+  const body = {
+    _subject: `Nieuwe snelcheck: ${F.adres} – ${WENS[w.wens]} – ${B.stoplicht}`,
+    _template: 'table', _captcha: 'false',
+    _autoresponse: mailTekst(F, B, w, naam),
+    name: naam || '(geen naam)', email,
+    Adres: F.adres, Gemeente: F.gemeente, Wens: WENS[w.wens] + (w.wens === 'uitbouw' ? `, ${w.diepte} m` : w.wens === 'dakkapel' ? `, ${w.dakvlak}` : ''),
+    Uitslag: `${B.stoplicht.toUpperCase()} – ${B.kop}`, Toelichting: B.tekst, 'Volgende stap': B.stap,
+    Plan: `${F.plan.naam} (${F.plan.datum}), bestemming ${F.bestemming}`,
+    Woning: `bouwjaar ${F.bag.bouwjaar}, ${F.bag.oppervlakte} m², perceel ${F.perceel ? F.perceel.nr + ' (' + F.perceel.opp + ' m²)' : '?'}`,
+    Controlepunten: B.controle.join(' | ')
+  };
+  const r = await fetch('https://formsubmit.co/ajax/' + MAIL_TO, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || String(j.success) !== 'true') throw new Error(j.message || ('HTTP ' + r.status));
+  return j;
+}
+renderLeeg();
+})();
+</script>
+</body>
+</html>
