@@ -342,7 +342,7 @@ const UITLEG4 = `<div class="regels4">
   <div><h5>Toestemming nodig</h5><ul><li>Huurwoning: toestemming van de verhuurder.</li><li>Appartement: toestemming van de VvE.</li><li>Monument of beschermd gezicht: bijna altijd een vergunning.</li></ul></div>
 </div>`;
 /* ---------- vervolg: rapport (€ 50) en offerte ---------- */
-const BETAAL = { prijs: 50, link: '', levering: 'direct' }; // link: TODO betaalkoppeling (Mollie/Stripe). levering 'direct' = rapport meteen na bestelling (testfase, geen handwerk); later 'na-betaling' via de betaalkoppeling
+const BETAAL = { prijs: 50, link: '', naam: 'Revolut', levering: 'direct' }; // link: Revolut Business betaallink (Merchant → Payment links → Create link, € 50, 'accept multiple payments'); sandbox-link voor intern testen. levering 'direct' = rapport meteen na bestelling; 'na-betaling' kan pas met een betaalkoppeling met webhook (klein stukje server)
 const fasen = (nu) => `<ol class="fasen">
   <li class="${nu > 1 ? 'klaar' : 'nu'}"><b>1</b><span>Gratis snelcheck<br><span class="mono">stoplicht en m²</span></span></li>
   <li class="${nu === 2 ? 'nu' : nu > 2 ? 'klaar' : ''}"><b>2</b><span>Rapport op maat<br><span class="mono">€ ${BETAAL.prijs}, binnen 2 werkdagen</span></span></li>
@@ -417,11 +417,10 @@ function renderBestel(soort){
       if (rapport) { const o = orders.get(); o.push({ nr, t: Date.now(), ...b, adres: laatste.F.adres, stoplicht: laatste.B.stoplicht, kop: laatste.B.kop, status: BETAAL.levering === 'direct' ? 'geleverd' : 'besteld', niveau: ctr.niveau, F: laatste.F, B: laatste.B, w: laatste.w }); orders.set(o); }
       const link = rapport ? rapportLink(laatste.w, nr, b.naam) : '';
       $('#bestel').innerHTML = `<div class="bestel"><div class="ok">${rapport
-        ? `<b>Bestelling ${esc(nr)} ontvangen.</b> Dank u wel, ${esc(b.naam || '')}. ${BETAAL.levering === 'direct' ? `Uw rapport staat klaar: <a href="${esc(link)}" target="_blank" rel="noopener">open het rapport</a> (printen of opslaan als PDF). De link staat ook in uw mail op ${esc(b.email)}, samen met het betaalverzoek van € ${BETAAL.prijs} (iDEAL).` : BETAAL.link ? 'U wordt doorgestuurd naar de betaalpagina; direct na betaling staat het rapport in uw mail.' : `U ontvangt op ${esc(b.email)} een betaalverzoek van € ${BETAAL.prijs} (iDEAL). Direct na betaling staat het rapport in uw mail.`}<br><span class="later">Laat u daarna de vergunning door ons aanvragen, dan verrekenen we de € ${BETAAL.prijs}.</span>`
+        ? `<b>Bestelling ${esc(nr)} ontvangen.</b> Dank u wel, ${esc(b.naam || '')}. ${BETAAL.levering === 'direct' ? `Uw rapport staat klaar: <a href="${esc(link)}" target="_blank" rel="noopener">open het rapport</a> (printen of opslaan als PDF). De link staat ook in uw mail op ${esc(b.email)}.` : `Direct na betaling staat het rapport in uw mail op ${esc(b.email)}.`} ${BETAAL.link ? `<br><a class="knop" style="display:inline-block;width:auto;margin-top:10px;text-decoration:none" href="${esc(BETAAL.link)}" target="_blank" rel="noopener">Betaal € ${BETAAL.prijs} via ${esc(BETAAL.naam)}</a><br><span class="later">Vermeld bij de betaling uw bestelnummer ${esc(nr)}.</span>` : `<br>U ontvangt per mail een betaalverzoek van € ${BETAAL.prijs} (iDEAL).`}<br><span class="later">Laat u daarna de vergunning door ons aanvragen, dan verrekenen we de € ${BETAAL.prijs}.</span>`
         : `<b>Aanvraag ontvangen.</b> Dank u wel, ${esc(b.naam || '')}. We nemen binnen 2 werkdagen contact met u op via ${esc(b.email)}${b.tel ? ' of ' + esc(b.tel) : ''}.`}</div></div>`;
       $('#resultaat .fasen').outerHTML = fasen(rapport ? 2 : 3);
       if (rapport && BETAAL.levering === 'direct' && !BETAAL.link) openRapport(laatste.F, laatste.B, laatste.w, { naam: b.naam, nr });
-      if (rapport && BETAAL.link) location.href = BETAAL.link + (BETAAL.link.includes('?') ? '&' : '?') + 'ref=' + encodeURIComponent(nr);
     } catch (err) { $('#b-fout').textContent = 'Versturen lukte niet (' + err.message + '). Probeer het nog eens of mail naar info@aivergunning.nl.'; $('#b-knop').disabled = false; $('#b-knop').textContent = rapport ? 'Bestelling plaatsen' : 'Offerte aanvragen'; }
   });
 }
@@ -434,7 +433,7 @@ async function verstuurBestelling(soort, nr, b){
     _autoresponse: rapport
       ? [`Beste ${b.naam || 'heer/mevrouw'},`, '', `Dank voor uw bestelling van het rapport voor ${F.adres} (bestelnummer ${nr}).`, '',
          ...(BETAAL.levering === 'direct' ? [`UW RAPPORT: ${link}`, 'Open de link, kies "Printen / opslaan als PDF" en u heeft het rapport als bestand. De link blijft werken.', ''] : [`Direct na betaling ontvangt u de link naar uw rapport.`, '']),
-         `Betaling: u ontvangt van ons een betaalverzoek van € ${BETAAL.prijs} incl. btw (iDEAL). Laat u daarna de vergunning door ons aanvragen, dan verrekenen we de € ${BETAAL.prijs} met die opdracht. Niet tevreden? Binnen 14 dagen uw geld terug.`, '',
+         `Betaling: ${BETAAL.link ? `betaal € ${BETAAL.prijs} incl. btw via deze link: ${BETAAL.link} (vermeld bestelnummer ${nr}).` : `u ontvangt van ons een betaalverzoek van € ${BETAAL.prijs} incl. btw (iDEAL).`} Laat u daarna de vergunning door ons aanvragen, dan verrekenen we de € ${BETAAL.prijs} met die opdracht. Niet tevreden? Binnen 14 dagen uw geld terug.`, '',
          'SAMENVATTING', ...rapportTekst(F, B, w, ctr), '', 'Met vriendelijke groet,', 'Casper Laan', 'aivergunning.nl'].join('\n')
       : [`Beste ${b.naam || 'heer/mevrouw'},`, '', `Dank voor uw aanvraag voor ${F.adres}. We bekijken uw situatie en nemen binnen 2 werkdagen contact met u op voor een korte afstemming. Daarna ontvangt u een offerte met een prijs per stap.`, '', 'Met vriendelijke groet,', 'Casper Laan', 'aivergunning.nl'].join('\n'),
     name: b.naam || '(geen naam)', email: b.email, Telefoon: b.tel || '-', Soort: rapport ? `Rapport € ${BETAAL.prijs} – bestelnummer ${nr} – ${BETAAL.levering === 'direct' ? 'rapport direct geleverd' : 'leveren na betaling'} – BETAALVERZOEK NOG STUREN` : 'Offerte tekening + gemeente',
