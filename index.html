@@ -242,7 +242,7 @@ table.log th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:
   </div>
   <div class="card" style="margin-top:20px">
     <div class="res-kop"><h2>Rapportbestellingen</h2><span class="mono">€ 50 per rapport · betaalkoppeling nog niet actief</span></div>
-    <p class="mono" style="margin-top:0">Testwerkwijze zonder betaalkoppeling: bestelling komt per mail binnen, jij stuurt zelf het betaalverzoek (factuur in Informer), opent hier het rapport, controleert het en print het naar PDF voor de klant. Daarna op "verstuurd" zetten.</p>
+    <p class="mono" style="margin-top:0">Het rapport wordt automatisch gemaakt en geleverd (link in de mail van de klant). Jij hoeft alleen te kijken bij "controle laag": dan staat [CONTROLE NODIG] in het onderwerp van de bestelmail. Betaalverzoek stuur je nu nog zelf (factuur in Informer); later doet de betaalkoppeling dat.</p>
     <div class="scroll"><table class="log"><thead><tr><th>Nr</th><th>Tijd</th><th>Klant</th><th>Adres</th><th>Uitslag</th><th>Status</th><th>Acties</th></tr></thead><tbody id="orderbody"></tbody></table></div>
   </div>
 </section>
@@ -342,7 +342,7 @@ const UITLEG4 = `<div class="regels4">
   <div><h5>Toestemming nodig</h5><ul><li>Huurwoning: toestemming van de verhuurder.</li><li>Appartement: toestemming van de VvE.</li><li>Monument of beschermd gezicht: bijna altijd een vergunning.</li></ul></div>
 </div>`;
 /* ---------- vervolg: rapport (€ 50) en offerte ---------- */
-const BETAAL = { prijs: 50, link: '' }; // TODO betaalkoppeling (Mollie of Stripe): vul hier de betaallink in; leeg = betaalverzoek volgt per mail (testfase)
+const BETAAL = { prijs: 50, link: '', levering: 'direct' }; // link: TODO betaalkoppeling (Mollie/Stripe). levering 'direct' = rapport meteen na bestelling (testfase, geen handwerk); later 'na-betaling' via de betaalkoppeling
 const fasen = (nu) => `<ol class="fasen">
   <li class="${nu > 1 ? 'klaar' : 'nu'}"><b>1</b><span>Gratis snelcheck<br><span class="mono">stoplicht en m²</span></span></li>
   <li class="${nu === 2 ? 'nu' : nu > 2 ? 'klaar' : ''}"><b>2</b><span>Rapport op maat<br><span class="mono">€ ${BETAAL.prijs}, binnen 2 werkdagen</span></span></li>
@@ -351,7 +351,7 @@ function vervolgHTML(F, B){
   return `<h4>Wat kunt u nu doen</h4>
   <div class="vervolg">
     <div><h5>Rapport op maat voor uw adres</h5><div class="prijs">€ ${BETAAL.prijs}<small> incl. btw</small></div>
-      <ul><li>Kaart van uw perceel met het gebied waar u mag bouwen</li><li>Berekening van uw vergunningvrije m², stap voor stap</li><li>De regels van uw gemeente in gewone taal${F.plan && F.plan.naam ? ` (${esc(F.plan.naam)})` : ''}</li><li>Door een vergunningspecialist gecontroleerd, binnen 2 werkdagen in uw mail</li><li>Niet tevreden? Binnen 14 dagen uw geld terug</li></ul>
+      <ul><li>Kaart van uw perceel met het gebied waar u mag bouwen</li><li>Berekening van uw vergunningvrije m², stap voor stap</li><li>De regels van uw gemeente in gewone taal${F.plan && F.plan.naam ? ` (${esc(F.plan.naam)})` : ''}</li><li>Automatisch gecontroleerd op ${CONTROLES_N} punten, direct in uw mail als PDF</li><li>Niet tevreden? Binnen 14 dagen uw geld terug</li></ul>
       <div class="terug">Laat u daarna de vergunning door ons aanvragen, dan verrekenen we de € ${BETAAL.prijs} met die opdracht.</div>
       <button class="knop" type="button" id="bestelknop">Rapport bestellen</button></div>
     <div><h5>Tekening en het gesprek met de gemeente</h5><div class="prijs">Offerte<small> op basis van uren</small></div>
@@ -399,7 +399,7 @@ function renderBestel(soort){
     <div class="rij"><div class="veld"><label for="b-naam">Naam</label><input id="b-naam" type="text" value="${esc(naam)}" autocomplete="name"></div><div class="veld"><label for="b-tel">Telefoon (optioneel)</label><input id="b-tel" type="tel" autocomplete="tel"></div></div>
     <div class="veld"><label for="b-email">E-mailadres</label><input id="b-email" type="email" value="${esc(email)}" autocomplete="email"></div>
     <div class="veld"><label for="b-opm">${rapport ? 'Wat wilt u precies bouwen? (optioneel)' : 'Vertel kort wat u wilt'}</label><textarea id="b-opm" placeholder="${rapport ? 'Bijv. schuur van 5 x 9 m met kap, naast de woning' : 'Bijv. uitbouw 3 m met tekeningen en aanvraag'}"></textarea></div>
-    ${rapport ? `<label class="check"><input id="b-akkoord" type="checkbox"><span>Ik bestel het rapport voor ${esc(F.adres)} voor € ${BETAAL.prijs} incl. btw. Ik ontvang een betaalverzoek (iDEAL) per mail; na betaling krijg ik het rapport binnen 2 werkdagen. Niet tevreden, dan binnen 14 dagen geld terug.</span></label>` : `<label class="check"><input id="b-akkoord" type="checkbox"><span>Ik wil een vrijblijvende offerte voor ${esc(F.adres)}. aivergunning.nl mag mij daarvoor mailen of bellen.</span></label>`}
+    ${rapport ? `<label class="check"><input id="b-akkoord" type="checkbox"><span>Ik bestel het rapport voor ${esc(F.adres)} voor € ${BETAAL.prijs} incl. btw. Het rapport staat direct klaar en ik ontvang een betaalverzoek (iDEAL) per mail. Niet tevreden, dan binnen 14 dagen geld terug.</span></label>` : `<label class="check"><input id="b-akkoord" type="checkbox"><span>Ik wil een vrijblijvende offerte voor ${esc(F.adres)}. aivergunning.nl mag mij daarvoor mailen of bellen.</span></label>`}
     <button class="knop" type="submit" id="b-knop">${rapport ? 'Bestelling plaatsen' : 'Offerte aanvragen'}</button>
     <div class="fout" id="b-fout" role="alert"></div>
   </form>`;
@@ -413,24 +413,32 @@ function renderBestel(soort){
     const nr = rapport ? orderNr() : '';
     try {
       await verstuurBestelling(soort, nr, b);
-      if (rapport) { const o = orders.get(); o.push({ nr, t: Date.now(), ...b, adres: laatste.F.adres, stoplicht: laatste.B.stoplicht, kop: laatste.B.kop, status: 'besteld', F: laatste.F, B: laatste.B, w: laatste.w }); orders.set(o); }
+      const ctr = rapport ? controles(laatste.F, laatste.B) : null;
+      if (rapport) { const o = orders.get(); o.push({ nr, t: Date.now(), ...b, adres: laatste.F.adres, stoplicht: laatste.B.stoplicht, kop: laatste.B.kop, status: BETAAL.levering === 'direct' ? 'geleverd' : 'besteld', niveau: ctr.niveau, F: laatste.F, B: laatste.B, w: laatste.w }); orders.set(o); }
+      const link = rapport ? rapportLink(laatste.w, nr, b.naam) : '';
       $('#bestel').innerHTML = `<div class="bestel"><div class="ok">${rapport
-        ? `<b>Bestelling ${esc(nr)} ontvangen.</b> Dank u wel, ${esc(b.naam || '')}. ${BETAAL.link ? 'U wordt doorgestuurd naar de betaalpagina.' : `U ontvangt op ${esc(b.email)} een betaalverzoek van € ${BETAAL.prijs} (iDEAL). Na betaling staat het rapport binnen 2 werkdagen in uw mail.`}<br><span class="later">Laat u daarna de vergunning door ons aanvragen, dan verrekenen we de € ${BETAAL.prijs}.</span>`
+        ? `<b>Bestelling ${esc(nr)} ontvangen.</b> Dank u wel, ${esc(b.naam || '')}. ${BETAAL.levering === 'direct' ? `Uw rapport staat klaar: <a href="${esc(link)}" target="_blank" rel="noopener">open het rapport</a> (printen of opslaan als PDF). De link staat ook in uw mail op ${esc(b.email)}, samen met het betaalverzoek van € ${BETAAL.prijs} (iDEAL).` : BETAAL.link ? 'U wordt doorgestuurd naar de betaalpagina; direct na betaling staat het rapport in uw mail.' : `U ontvangt op ${esc(b.email)} een betaalverzoek van € ${BETAAL.prijs} (iDEAL). Direct na betaling staat het rapport in uw mail.`}<br><span class="later">Laat u daarna de vergunning door ons aanvragen, dan verrekenen we de € ${BETAAL.prijs}.</span>`
         : `<b>Aanvraag ontvangen.</b> Dank u wel, ${esc(b.naam || '')}. We nemen binnen 2 werkdagen contact met u op via ${esc(b.email)}${b.tel ? ' of ' + esc(b.tel) : ''}.`}</div></div>`;
       $('#resultaat .fasen').outerHTML = fasen(rapport ? 2 : 3);
+      if (rapport && BETAAL.levering === 'direct' && !BETAAL.link) openRapport(laatste.F, laatste.B, laatste.w, { naam: b.naam, nr });
       if (rapport && BETAAL.link) location.href = BETAAL.link + (BETAAL.link.includes('?') ? '&' : '?') + 'ref=' + encodeURIComponent(nr);
     } catch (err) { $('#b-fout').textContent = 'Versturen lukte niet (' + err.message + '). Probeer het nog eens of mail naar info@aivergunning.nl.'; $('#b-knop').disabled = false; $('#b-knop').textContent = rapport ? 'Bestelling plaatsen' : 'Offerte aanvragen'; }
   });
 }
 async function verstuurBestelling(soort, nr, b){
   const { F, B, w } = laatste; const rapport = soort === 'rapport';
+  const ctr = rapport ? controles(F, B) : null; const link = rapport ? rapportLink(w, nr, b.naam) : '';
   const body = {
-    _subject: rapport ? `Rapportbestelling ${nr} (€ ${BETAAL.prijs}): ${F.adres}` : `Offerteaanvraag tekening + gemeente: ${F.adres}`,
+    _subject: rapport ? `${ctr.niveau === 'laag' ? '[CONTROLE NODIG] ' : ''}Rapportbestelling ${nr} (€ ${BETAAL.prijs}): ${F.adres}` : `Offerteaanvraag tekening + gemeente: ${F.adres}`,
     _template: 'table', _captcha: 'false',
     _autoresponse: rapport
-      ? [`Beste ${b.naam || 'heer/mevrouw'},`, '', `Dank voor uw bestelling van het rapport voor ${F.adres} (bestelnummer ${nr}).`, '', `Zo gaat het verder:`, `1. U ontvangt van ons een betaalverzoek van € ${BETAAL.prijs} incl. btw (iDEAL).`, `2. Na betaling controleert een vergunningspecialist uw situatie en ontvangt u het rapport binnen 2 werkdagen als PDF.`, `3. Laat u daarna de vergunning door ons aanvragen, dan verrekenen we de € ${BETAAL.prijs} met die opdracht.`, '', `Niet tevreden? Dan krijgt u binnen 14 dagen uw geld terug.`, '', 'Met vriendelijke groet,', 'Casper Laan', 'aivergunning.nl'].join('\n')
+      ? [`Beste ${b.naam || 'heer/mevrouw'},`, '', `Dank voor uw bestelling van het rapport voor ${F.adres} (bestelnummer ${nr}).`, '',
+         ...(BETAAL.levering === 'direct' ? [`UW RAPPORT: ${link}`, 'Open de link, kies "Printen / opslaan als PDF" en u heeft het rapport als bestand. De link blijft werken.', ''] : [`Direct na betaling ontvangt u de link naar uw rapport.`, '']),
+         `Betaling: u ontvangt van ons een betaalverzoek van € ${BETAAL.prijs} incl. btw (iDEAL). Laat u daarna de vergunning door ons aanvragen, dan verrekenen we de € ${BETAAL.prijs} met die opdracht. Niet tevreden? Binnen 14 dagen uw geld terug.`, '',
+         'SAMENVATTING', ...rapportTekst(F, B, w, ctr), '', 'Met vriendelijke groet,', 'Casper Laan', 'aivergunning.nl'].join('\n')
       : [`Beste ${b.naam || 'heer/mevrouw'},`, '', `Dank voor uw aanvraag voor ${F.adres}. We bekijken uw situatie en nemen binnen 2 werkdagen contact met u op voor een korte afstemming. Daarna ontvangt u een offerte met een prijs per stap.`, '', 'Met vriendelijke groet,', 'Casper Laan', 'aivergunning.nl'].join('\n'),
-    name: b.naam || '(geen naam)', email: b.email, Telefoon: b.tel || '-', Soort: rapport ? `Rapport € ${BETAAL.prijs} – bestelnummer ${nr} – BETAALVERZOEK NOG STUREN` : 'Offerte tekening + gemeente',
+    name: b.naam || '(geen naam)', email: b.email, Telefoon: b.tel || '-', Soort: rapport ? `Rapport € ${BETAAL.prijs} – bestelnummer ${nr} – ${BETAAL.levering === 'direct' ? 'rapport direct geleverd' : 'leveren na betaling'} – BETAALVERZOEK NOG STUREN` : 'Offerte tekening + gemeente',
+    ...(rapport ? { Rapport: link, Controle: `${ctr.niveau.toUpperCase()}: ${ctr.ok}/${ctr.items.length} controles goed${ctr.niveau === 'laag' ? ' – ZELF NAKIJKEN: ' + ctr.items.filter(c => c.ok === false).map(c => c.naam).join(', ') : ctr.niveau === 'middel' ? ' – let op: ' + ctr.items.filter(c => c.ok === null).map(c => c.naam).join(', ') : ''}` } : {}),
     Adres: F.adres, Gemeente: F.gemeente, Wens: WENS[w.wens] + (w.wens === 'uitbouw' ? `, ${w.diepte} m` : w.wens === 'dakkapel' ? `, ${w.dakvlak}` : ''), Toelichting_klant: b.opm || '-',
     Uitslag: `${B.stoplicht.toUpperCase()} – ${B.kop}`, 'Nog vergunningvrij': F.resterend != null ? `${F.resterend} m²` : 'onbekend',
     Plan: `${F.plan.naam} (${F.plan.datum}), bestemming ${F.bestemming}`, Woning: `bouwjaar ${F.bag.bouwjaar}, ${F.bag.oppervlakte} m², perceel ${F.perceel ? F.perceel.nr + ' (' + F.perceel.opp + ' m²)' : '?'}`
@@ -469,9 +477,48 @@ function renderMail(F, B, w, email, naam){
   $('#rapport').addEventListener('click', () => openRapport(F, B, w, { naam, nr: 'VOORBEELD' }));
 }
 
+/* ---------- ingebouwde controles (geen handwerk: alleen 'laag' vraagt om een blik) ---------- */
+const CONTROLES_N = 14;
+function controles(F, B){
+  const log = (F.log || []).join(' | ');
+  const items = [];
+  const c = (naam, ok, tekst) => items.push({ naam, ok, tekst });
+  c('Adres gevonden', !!F.adres, F.adres ? `${F.adres} (PDOK Locatieserver)` : 'niet gevonden');
+  c('Woning gevonden in de BAG', !!(F.bag && F.bag.pand), F.bag && F.bag.pand ? `pand ${F.bag.pand}, bouwjaar ${F.bag.bouwjaar}` : 'geen pand');
+  c('Adrespunt ligt in de woning', /adrespunt ligt niet/i.test(log) ? null : true, /adrespunt ligt niet/i.test(log) ? 'adrespunt buiten het pand; middelpunt van het pand gebruikt' : 'ja');
+  c('Perceel gevonden (Kadaster)', !!F.perceel, F.perceel ? `${F.perceel.nr}, ${F.perceel.opp} m²` : 'geen perceel; bebouwingsgebied niet te berekenen');
+  c('Eén woning op het adres', F.bag && F.bag.vboInPand > 1 ? null : true, F.bag && F.bag.vboInPand > 1 ? `${F.bag.vboInPand} adressen in het pand (appartement?): het erf is dan gedeeld` : 'ja');
+  c('Bestemmingsplan gevonden', !!(F.plan && F.plan.naam), F.plan && F.plan.naam ? `${F.plan.naam} (${F.plan.datum || '?'})` : 'geen plan op het adres');
+  c('Bestemming is wonen', F.bestemming ? (/woon|wonen|tuin|erf|gemengd|centrum/i.test(F.bestemming) ? true : null) : false, F.bestemming || 'onbekend');
+  c('Hoogtes uit het plan', F.maatvoering && F.maatvoering.length ? true : null, F.maatvoering && F.maatvoering.length ? F.maatvoering.map(m => String(m).replace(/"/g, '').replace('=', ' ')).join(', ') : 'geen maatvoering op de kaart; zie de planregels');
+  c('Monument en beschermd gezicht', Array.isArray(F.monument) ? true : false, Array.isArray(F.monument) ? (F.bescherming.rijksmonument ? 'rijksmonument' : F.bescherming.gezicht ? 'beschermd gezicht ' + F.bescherming.gezicht : 'geen (RCE)') : 'RCE niet bereikbaar');
+  c('Straatkant bepaald', !!(F.straatRichting && F.straatRichting.length), 'richting van de voorgevel afgeleid uit het plan en de gevels');
+  c('Bebouwingsgebied plausibel', F.achtererf != null && F.perceel ? (F.achtererf > 0 && F.achtererf < F.perceel.opp ? true : false) : false, F.achtererf != null ? `${F.achtererf} m² van een perceel van ${F.perceel ? F.perceel.opp : '?'} m²` : 'niet berekend');
+  c('Woningoppervlak plausibel', F.hoofdgebouw != null ? (F.hoofdgebouw >= 20 && F.hoofdgebouw <= 600 ? true : null) : false, F.hoofdgebouw != null ? `${Math.round(F.hoofdgebouw)} m² op de grond` : 'onbekend');
+  c('Bijgebouwen herkend', F.bijgebouwen ? true : false, F.bijgebouwen ? `${F.bijgebouwen.aantal} los gebouw(en), ${F.bijgebouwen.opp} m² (aanbouwen aan de woning telt de BAG bij de woning)` : 'onbekend');
+  c('Bronnen bereikbaar', !/BRK:|BAG:|WMS:|plan:/i.test(log), log ? log.slice(0, 120) : 'alle bronnen geantwoord');
+  const ok = items.filter(i => i.ok === true).length, fout = items.filter(i => i.ok === false).length, let_ = items.filter(i => i.ok === null).length;
+  return { items, ok, fout, let: let_, niveau: fout ? 'laag' : let_ ? 'middel' : 'hoog' };
+}
+function rapportLink(w, nr, naam){
+  const q = btoa(unescape(encodeURIComponent(JSON.stringify({ a: w.adres, w: w.wens, d: w.diepte, v: w.dakvlak, n: nr, k: naam || '' }))));
+  return location.origin + location.pathname + '?rapport=' + encodeURIComponent(q);
+}
+function rapportTekst(F, B, w, ctr){
+  return [`Adres: ${F.adres} – ${WENS[w.wens]}${w.wens === 'uitbouw' ? ', ' + nl(w.diepte) + ' m diep' : ''}`, `UITSLAG: ${B.kop.toUpperCase()}`, B.tekst, `Volgende stap: ${B.stap}`, '',
+    ...(F.resterend != null ? [`Nog vergunningvrij bij te bouwen: ca. ${nl(Math.round(F.resterend))} m² (bebouwingsgebied ${nl(F.achtererf)} m², maximaal ${nl(F.maxBijbehorend)} m², al bebouwd ${nl(F.bijgebouwen.opp)} m²)`, ''] : []),
+    'Wat geldt er:', ...B.regels.map(r => `- ${r.titel}: ${r.tekst}`), '',
+    'Niet automatisch te zien, zelf nakijken:', ...B.controle.map(c => `- ${c}`), '',
+    `Ingebouwde controle: ${ctr.ok} van ${ctr.items.length} punten goed (betrouwbaarheid ${ctr.niveau})${ctr.items.filter(c => c.ok !== true).length ? ' – aandacht: ' + ctr.items.filter(c => c.ok !== true).map(c => c.naam.toLowerCase()).join(', ') : ''}.`];
+}
+
 /* ---------- rapport (A4, printen naar PDF) ---------- */
 function openRapport(F, B, w, o){
   const win = window.open('', '_blank'); if (!win) { alert('Sta pop-ups toe om het rapport te openen.'); return; }
+  win.document.write(rapportHTML(F, B, w, o)); win.document.close();
+}
+function rapportHTML(F, B, w, o){
+  const ctr = controles(F, B);
   const K = { groen: '#1F8A5B', oranje: '#C97714', rood: '#B8402C' }[B.stoplicht];
   const datum = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
   const wensTxt = WENS[w.wens] + (w.wens === 'uitbouw' ? `, ${nl(w.diepte)} m diep` : '') + (w.wens === 'dakkapel' ? `, ${w.dakvlak}kant` : '');
@@ -487,7 +534,7 @@ function openRapport(F, B, w, o){
 .logo{font-weight:700;font-size:16pt;letter-spacing:-.4px}.logo span{color:var(--acc)}
 .meta{text-align:right;font-size:8.5pt;color:var(--mut);line-height:1.4}
 h1{font-size:19pt;margin:0 0 1mm;letter-spacing:-.4px}.sub{color:var(--mut);margin:0 0 5mm}
-h2{font-size:12.5pt;margin:7mm 0 2.5mm;padding-bottom:1mm;border-bottom:1px solid var(--line)}
+h2{font-size:12.5pt;margin:7mm 0 2.5mm;padding-bottom:1mm;border-bottom:1px solid var(--line);break-after:avoid}
 .uit{display:flex;gap:5mm;border:1px solid var(--line);border-left:6px solid ${K};border-radius:2mm;padding:4mm 5mm;background:var(--bg)}
 .uit h3{margin:0 0 1mm;font-size:14pt;color:${K}}.uit p{margin:0}.uit .stap{margin-top:2.5mm;padding-top:2mm;border-top:1px dashed var(--line)}
 .m2{display:flex;gap:5mm;align-items:center;margin:4mm 0;padding:4mm 5mm;border:1px solid var(--line);border-radius:2mm;background:var(--acc-soft)}
@@ -507,10 +554,10 @@ details.uitleg{margin-top:2mm;font-size:9pt;color:var(--mut)}details.uitleg summ
 .zone-pand{background:var(--ink);color:#fff}.zone-tuin{background:var(--groen-soft)}.zone-waarde{background:repeating-linear-gradient(45deg,var(--oranje-soft) 0 2mm,#fff 2mm 3.5mm)}.zone-overig{background:var(--acc-soft)}.mono{font:8.5pt "IBM Plex Mono",Consolas,monospace;color:var(--mut)}
 .vervolg{display:grid;grid-template-columns:1fr 1fr;gap:3mm;break-inside:avoid}.vervolg>div{border:1px solid var(--acc);border-radius:2mm;padding:3.5mm 4mm}.vervolg h5{margin:0 0 1.5mm;font-size:11pt}.vervolg p{margin:0;font-size:9.5pt}
 .voet{margin-top:6mm;padding:3.5mm 4mm;background:var(--bg);border-radius:2mm;font-size:8.3pt;color:var(--mut)}
-.check{margin-top:5mm;border:1px dashed var(--line);padding:3mm 4mm;font-size:8.5pt;color:var(--mut);display:flex;gap:8mm;break-inside:avoid}
+.ctr{border:1px solid var(--line);border-radius:2mm;overflow:hidden;break-inside:avoid}.ctr div{display:grid;grid-template-columns:6mm 48mm 1fr;gap:2mm;padding:1.6mm 3mm;border-bottom:1px solid var(--line);font-size:9pt;align-items:baseline}.ctr div:last-child{border-bottom:0}.ctr i{font-style:normal;font-weight:700}.ctr .ok i{color:var(--groen)}.ctr .let i{color:var(--oranje)}.ctr .fout i{color:var(--rood)}.ctr span:last-child{color:var(--mut)}.ctr .kop{background:var(--bg);font-weight:600;grid-template-columns:1fr;font-size:9.5pt}
 .knoppen{position:fixed;bottom:16px;right:16px;display:flex;gap:6px}.knoppen button{font:600 13px system-ui;padding:8px 14px;border-radius:6px;border:0;background:var(--acc);color:#fff;cursor:pointer}
 </style></head><body><div class="knoppen geen"><button onclick="print()">Printen / opslaan als PDF</button></div><div class="vel">
-<div class="top"><div class="logo">ai<span>vergunning</span>.nl</div><div class="meta">Rapport ${esc(o.nr || '')}<br>${esc(datum)}<br>${o.naam ? 'Voor ' + esc(o.naam) : ''}</div></div>
+<div class="top"><div class="logo">ai<span>vergunning</span>.nl</div><div class="meta">Rapport ${esc(o.nr || '')}<br>${esc(datum)}<br>${o.naam ? 'Voor ' + esc(o.naam) : ''}<br>Betrouwbaarheid: <b>${ctr.niveau}</b> (${ctr.ok}/${ctr.items.length} controles)</div></div>
 <h1>${esc(F.adres)}</h1><p class="sub">Uw plan: <b>${esc(wensTxt)}</b> · gemeente ${esc(F.gemeente)}</p>
 <h2>1. Uitkomst in één oogopslag</h2>
 <div class="uit"><div><h3>${esc(B.kop)}</h3><p>${esc(B.tekst)}</p><p class="stap"><b>Volgende stap:</b> ${esc(B.stap)}</p></div></div>
@@ -521,22 +568,23 @@ ${F.achtererf != null ? '<h2>3. Berekening van uw vergunningvrije ruimte</h2>' +
 <h2>${F.achtererf != null ? 5 : 4}. Wat geldt er op uw adres</h2>
 ${F.zonesAchter.length ? zonesBalk(F) : ''}
 <ul class="regels">${B.regels.map(r => `<li><span class="t">${esc(r.titel)}</span><span>${esc(r.tekst)}${r.bron ? ` <a href="${esc(r.bron)}">bron</a>` : ''}</span></li>`).join('')}</ul>
-<h2>${F.achtererf != null ? 6 : 5}. Dit controleren wij voor u, of laat u nog nakijken</h2>
+<h2>${F.achtererf != null ? 6 : 5}. Ingebouwde controles</h2>
+<div class="ctr"><div class="kop">Automatisch gecontroleerd op ${esc(datum)} · ${ctr.ok} goed, ${ctr.let} aandachtspunt${ctr.let === 1 ? '' : 'en'}, ${ctr.fout} niet gelukt · betrouwbaarheid ${ctr.niveau}</div>${ctr.items.map(c => `<div class="${c.ok === true ? 'ok' : c.ok === null ? 'let' : 'fout'}"><i>${c.ok === true ? '✓' : c.ok === null ? '!' : '✗'}</i><span>${esc(c.naam)}</span><span>${esc(c.tekst)}</span></div>`).join('')}</div>
+<p style="font-size:9pt;color:var(--mut);margin:2mm 0 0">Niet automatisch te zien, dus zelf nakijken of door ons laten uitzoeken:</p>
 <ul class="controle">${B.controle.map(c => `<li>${esc(c)}</li>`).join('')}</ul>
 <h2>${F.achtererf != null ? 7 : 6}. Gegevens van uw woning</h2>
 <div class="feiten">${feit('Bouwjaar', esc(F.bag.bouwjaar ?? '–'))}${feit('Woonoppervlak (BAG)', F.bag.oppervlakte ? F.bag.oppervlakte + ' m²' : '–')}${feit('Perceel', F.perceel ? esc(F.perceel.nr) + ' · ' + F.perceel.opp + ' m²' : '–')}${feit('Woning op de grond', F.hoofdgebouw != null ? nl(Math.round(F.hoofdgebouw)) + ' m²' : '–')}${feit('Bijgebouwen (Kadaster)', F.bijgebouwen ? F.bijgebouwen.aantal + ' · ' + nl(F.bijgebouwen.opp) + ' m²' : '–')}${feit('Plan', esc((F.plan && F.plan.naam) || '–'))}${feit('Bestemming', esc(F.bestemming || '–'))}${feit('Monument / beschermd gezicht', F.bescherming ? (F.bescherming.rijksmonument ? 'rijksmonument' : F.bescherming.gezicht ? 'beschermd gezicht' : 'nee') : '–')}</div>
 <h2>${F.achtererf != null ? 8 : 7}. Hoe nu verder</h2>
 <div class="vervolg"><div><h5>Vergunningvrij bouwen</h5><p>Past uw plan binnen de ruimte uit dit rapport, dan kunt u bouwen zonder vergunning. Let op het Bbl (constructie, brand, isolatie) en op afspraken met buren.</p></div><div><h5>Vergunning nodig, of wilt u zekerheid?</h5><p>Wij maken de bouwkundige tekeningen, voeren het gesprek met de gemeente en dienen de aanvraag in. Laat u dat door ons doen, dan verrekenen we de € ${BETAAL.prijs} van dit rapport. Mail naar info@aivergunning.nl.</p></div></div>
-<div class="voet"><b>Voorbehoud.</b> Dit rapport is opgesteld op basis van openbare registers (Kadaster BAG en BRK, Ruimtelijke plannen en luchtfoto via PDOK, RCE), geraadpleegd op ${esc(datum)}, en de landelijke regels voor vergunningvrij bouwen (bruidsschat omgevingsplan en Bbl). Het gaat uit van legaal gebouwde bestaande bouwwerken en van de kadastrale grenzen; afwijkingen ter plaatse, privaatrechtelijke afspraken, welstand en het vergunningenarchief van de gemeente zijn niet onderzocht. Nieuwe regels die de gemeente sinds 2024 in het omgevingsplan heeft gepubliceerd, zijn alleen meegenomen voor zover vermeld. Het rapport is een deskundig advies, geen besluit; alleen de gemeente beslist. Aan dit rapport kunnen geen rechten worden ontleend.</div>
-<div class="check"><span>Gecontroleerd door: ____________________</span><span>Datum: ____________</span><span>Opmerkingen: ____________________________________</span></div>
+<div class="voet"><b>Voorbehoud.</b> Dit rapport is opgesteld op basis van openbare registers (Kadaster BAG en BRK, Ruimtelijke plannen en luchtfoto via PDOK, RCE), geraadpleegd op ${esc(datum)}, en de landelijke regels voor vergunningvrij bouwen (bruidsschat omgevingsplan en Bbl). Het gaat uit van legaal gebouwde bestaande bouwwerken en van de kadastrale grenzen; afwijkingen ter plaatse, privaatrechtelijke afspraken, welstand en het vergunningenarchief van de gemeente zijn niet onderzocht. Nieuwe regels die de gemeente sinds 2024 in het omgevingsplan heeft gepubliceerd, zijn alleen meegenomen voor zover vermeld. Het rapport is automatisch opgesteld met ingebouwde controles (hoofdstuk 6); het is een indicatie, geen besluit, en alleen de gemeente beslist. Aan dit rapport kunnen geen rechten worden ontleend.</div>
 </div></body></html>`;
-  win.document.write(html); win.document.close();
+  return html;
 }
 
 /* ---------- beheer: bestellingen ---------- */
 function renderOrders(){
   const o = orders.get();
-  $('#orderbody').innerHTML = o.length ? o.slice().reverse().map((r, i) => { const idx = o.length - 1 - i; return `<tr><td class="mono">${esc(r.nr)}</td><td class="mono">${esc(new Date(r.t).toLocaleString('nl-NL',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))}</td><td>${esc(r.naam || '')}<br><span class="mono">${esc(r.email)}${r.tel ? ' · ' + esc(r.tel) : ''}</span>${r.opm ? `<br><span class="mono">${esc(r.opm)}</span>` : ''}</td><td>${esc(r.adres)}</td><td><span class="pill ${r.stoplicht}">${esc(r.stoplicht)}</span> ${esc(r.kop)}</td><td><span class="pill ${r.status === 'verstuurd' ? 'groen' : r.status === 'betaald' ? 'oranje' : 'rood'}">${esc(r.status)}</span></td><td style="white-space:nowrap"><button class="knop2" data-open="${idx}">Rapport openen</button> ${r.status === 'besteld' ? `<button class="knop2" data-status="${idx}:betaald">Betaald</button>` : r.status === 'betaald' ? `<button class="knop2" data-status="${idx}:verstuurd">Verstuurd</button>` : ''}</td></tr>`; }).join('') : `<tr><td colspan="7" class="leeg">Nog geen bestellingen. Doe een check en klik op "Rapport bestellen".</td></tr>`;
+  $('#orderbody').innerHTML = o.length ? o.slice().reverse().map((r, i) => { const idx = o.length - 1 - i; return `<tr><td class="mono">${esc(r.nr)}</td><td class="mono">${esc(new Date(r.t).toLocaleString('nl-NL',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))}</td><td>${esc(r.naam || '')}<br><span class="mono">${esc(r.email)}${r.tel ? ' · ' + esc(r.tel) : ''}</span>${r.opm ? `<br><span class="mono">${esc(r.opm)}</span>` : ''}</td><td>${esc(r.adres)}</td><td><span class="pill ${r.stoplicht}">${esc(r.stoplicht)}</span> ${esc(r.kop)}</td><td><span class="pill ${r.status === 'verstuurd' || r.status === 'geleverd' ? 'groen' : r.status === 'betaald' ? 'oranje' : 'rood'}">${esc(r.status)}</span>${r.niveau ? `<br><span class="pill ${r.niveau === 'hoog' ? 'groen' : r.niveau === 'middel' ? 'oranje' : 'rood'}">controle ${esc(r.niveau)}</span>` : ''}</td><td style="white-space:nowrap"><button class="knop2" data-open="${idx}">Rapport openen</button> ${r.status === 'besteld' ? `<button class="knop2" data-status="${idx}:betaald">Betaald</button>` : r.status === 'betaald' ? `<button class="knop2" data-status="${idx}:verstuurd">Verstuurd</button>` : ''}</td></tr>`; }).join('') : `<tr><td colspan="7" class="leeg">Nog geen bestellingen. Doe een check en klik op "Rapport bestellen".</td></tr>`;
   $('#orderbody').querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => { const r = orders.get()[Number(b.dataset.open)]; openRapport(r.F, r.B, r.w, { naam: r.naam, nr: r.nr }); }));
   $('#orderbody').querySelectorAll('[data-status]').forEach(b => b.addEventListener('click', () => { const [i, s] = b.dataset.status.split(':'); const o2 = orders.get(); o2[Number(i)].status = s; orders.set(o2); renderOrders(); }));
 }
@@ -624,7 +672,20 @@ async function verstuur(F, B, w, email, naam){
   if (!r.ok || String(j.success) !== 'true') throw new Error(j.message || ('HTTP ' + r.status));
   return j;
 }
-renderLeeg();
+/* ---------- rapportlink (?rapport=...): check opnieuw draaien en het rapport tonen ---------- */
+const rp = new URLSearchParams(location.search).get('rapport');
+if (rp) {
+  (async () => {
+    try {
+      const o = JSON.parse(decodeURIComponent(escape(atob(rp))));
+      document.body.innerHTML = '<div class="wrap"><div class="card" style="margin-top:40px;max-width:520px"><h2 style="margin:0 0 8px">Rapport wordt gemaakt…</h2><p class="mono" id="rp-stap">Adres zoeken</p></div></div>';
+      const w = { adres: o.a, wens: o.w, diepte: Number(o.d) || 3, dakvlak: o.v || 'achter' };
+      const r = await snelcheck({ ...w, onStap: (st, wat) => { const e = document.getElementById('rp-stap'); if (e) e.textContent = wat || st; } });
+      if (r.fout) throw new Error(r.fout);
+      document.open(); document.write(rapportHTML(r.feiten, r.beoordeling, w, { nr: o.n, naam: o.k })); document.close();
+    } catch (err) { document.body.innerHTML = '<div class="wrap"><div class="card" style="margin-top:40px;max-width:520px"><h2>Rapport kon niet worden gemaakt</h2><p>' + esc(err.message || err) + '</p><p>Probeer het later opnieuw of mail naar info@aivergunning.nl.</p></div></div>'; }
+  })();
+} else renderLeeg();
 })();
 </script>
 </body>
