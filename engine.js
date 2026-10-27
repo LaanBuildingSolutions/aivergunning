@@ -1,4 +1,4 @@
-// aivergunning.nl — snelcheck v0.2 (21-10-2026: vergunningvrije m² zoals Struck, luchtfoto-kaart, monumentcheck)
+// Mijn Vergunning — vergunningscheck v0.2 (21-10-2026: vergunningvrije m², luchtfoto-kaart, monumentcheck)
 // Draait in een browser (fetch + CORS). Alleen openbare PDOK-bronnen, geen API-key nodig.
 // Gebruik: const res = await snelcheck({adres:'Essenlaan 149 Zwanenburg', wens:'uitbouw', diepte:3})
 // wens: 'uitbouw' | 'opbouw' | 'dakkapel' | 'splitsing'   opties: diepte (m), dakvlak ('achter'|'voor'|'zij')
@@ -228,7 +228,7 @@ function beoordeel(F, w) {
     const d = Number(w.diepte || 4);
     const opp = Math.round(d * F.pand.breedte);
     regels.push({ titel: 'Vergunningvrij (landelijk)', tekst: 'Aan- of uitbouw in het achtererfgebied, binnen 4 m van de oorspronkelijke achtergevel: 1 bouwlaag, max. 0,3 m boven de 1e verdiepingsvloer, max. 5 m hoog (bruidsschat art. 22.27/22.36, Bbl art. 2.29).', bron: 'https://iplo.nl/thema/bouw/bouwen-vergunning-melding/bijbehorende-bouwwerken/stappenplan-bepaling-vergunningvrij-bouwen' });
-    if (F.resterend != null) regels.push({ titel: 'Nog vergunningvrij', tekst: `Bebouwingsgebied ca. ${nl(F.achtererf)} m² → maximaal ${nl(F.maxBijbehorend)} m² aan bijbehorende bouwwerken. Er staat al ${nl(F.bijgebouwen.opp)} m² aan bijgebouwen, dus nog ca. ${nl(F.resterend)} m² vrij. Uw uitbouw: ca. ${opp} m².`, bron: '' });
+    if (F.resterend != null) regels.push({ titel: 'Nog vergunningvrij', tekst: `Bebouwingsgebied ca. ${nl(F.achtererf)} m² → maximaal ${nl(F.maxBijbehorend)} m² aan bijbehorende bouwwerken. Er staat al ${nl(F.bijgebouwen.opp)} m² aan bijgebouwen, dus nog ca. ${nl(F.resterend)} m² vrij. Jouw uitbouw: ca. ${opp} m².`, bron: '' });
     const wz = F.zonesAchter.filter(z => /waarde|landschap|cultuurhistorie|groen/i.test(z.dubbel + ' ' + z.bestemming));
     const waardeVanaf = wz.length ? Math.min(...wz.map(z => z.van)) : null;
     if (waardeVanaf != null && waardeVanaf > 0) regels.push({ titel: 'Strook achter de woning', tekst: `De eerste ca. ${nl(waardeVanaf)} m achter de woning heeft geen extra waarde-regel; daarachter ${wz[0].dubbel || wz[0].bestemming}.`, bron: '' });
@@ -243,7 +243,7 @@ function beoordeel(F, w) {
       stap = 'Laat de oorspronkelijke achtergevel en de maten controleren; vergunningvrij betekent wel dat het Bbl (constructie, brand, energie) geldt.';
     } else {
       stoplicht = 'oranje'; kop = 'Vergunning waarschijnlijk nodig';
-      tekst = d > 4 ? `Dieper dan 4 m gelden strengere regels (max. 3 m hoog, alleen bijgebruik). Een uitbouw van ${nl(d)} m vraagt waarschijnlijk een vergunning.` : `De uitbouw (ca. ${opp} m²) is groter dan de ca. ${nl(F.resterend)} m² die u nog vergunningvrij mag bijbouwen.`;
+      tekst = d > 4 ? `Dieper dan 4 m gelden strengere regels (max. 3 m hoog, alleen bijgebruik). Een uitbouw van ${nl(d)} m vraagt waarschijnlijk een vergunning.` : `De uitbouw (ca. ${opp} m²) is groter dan de ca. ${nl(F.resterend)} m² die je nog vergunningvrij mag bijbouwen.`;
       stap = F.bouwvlakLooptDoorAchterPand >= d ? `Het bouwvlak loopt nog ca. ${nl(F.bouwvlakLooptDoorAchterPand)} m door: binnen het plan is een vergunning dan kansrijk.` : 'Toetsing aan de afwijkingsregels van het plan; vaak kansrijk met een goede motivering.';
     }
   } else if (wens === 'opbouw') {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>aivergunning.nl – Snelcheck</title>
+<title>Vergunningscheck – Mijn Vergunning</title>
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -177,9 +177,9 @@ table.log th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:
 <body>
 <div class="wrap">
 <header class="top">
-  <div class="logo">ai<span>vergunning</span>.nl</div>
+  <div class="logo">Mijn <span>Vergunning</span></div>
   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-    <span class="badge">Testversie</span>
+    <span class="badge">Bèta</span>
     <div class="tabs" role="tablist">
       <button role="tab" aria-selected="true" id="tab-klant" data-view="klant">Klantkant</button>
       <button role="tab" aria-selected="false" id="tab-beheer" data-view="beheer">Binnengekomen checks</button>
@@ -191,7 +191,7 @@ table.log th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:
 <div class="grid">
   <div>
     <h1>Mag ik dit bouwen zonder vergunning?</h1>
-    <p class="lead">Vul uw adres en uw plan in. Binnen een minuut ziet u wat er op uw adres geldt, en de uitslag staat in uw mail.</p>
+    <p class="lead">Vul je adres en je plan in. Binnen een minuut zie je wat er op jouw adres geldt, en de uitslag staat in je mail.</p>
     <form id="f" class="card" novalidate>
       <div class="veld">
         <label for="adres">Adres</label>
@@ -199,7 +199,7 @@ table.log th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:
         <div id="sug" class="sug" hidden></div>
       </div>
       <div class="veld">
-        <span style="font-weight:500;font-size:13px">Wat wilt u bouwen?</span>
+        <span style="font-weight:500;font-size:13px">Wat wil je bouwen?</span>
         <div class="wensen" role="radiogroup">
           <input type="radio" name="wens" id="w-uitbouw" value="uitbouw" checked><label for="w-uitbouw"><svg viewBox="0 0 30 24"><path d="M3 21V9l8-6 8 6v12M19 13h8v8H19M1 21h28"/></svg>Uitbouw</label>
           <input type="radio" name="wens" id="w-opbouw" value="opbouw"><label for="w-opbouw"><svg viewBox="0 0 30 24"><path d="M6 21V10h14v11M6 10V4h14v6M2 21h26"/></svg>Opbouw</label>
@@ -213,7 +213,7 @@ table.log th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:
         <div class="veld"><label for="naam">Voornaam</label><input id="naam" type="text" autocomplete="given-name" placeholder="Bijv. Sanne"></div>
       </div>
       <div class="veld"><label for="email">E-mailadres</label><input id="email" type="email" autocomplete="email" placeholder="naam@voorbeeld.nl" required><span class="hint">Hier sturen we de uitslag naartoe.</span></div>
-      <label class="check"><input id="akkoord" type="checkbox"><span>Ik ga akkoord dat aivergunning.nl mijn adres en e-mail gebruikt om de check te maken, de uitslag te mailen en contact op te nemen. De mail wordt verzonden via FormSubmit.</span></label>
+      <label class="check"><input id="akkoord" type="checkbox"><span>Ik ga akkoord dat Mijn Vergunning mijn adres en e-mail gebruikt om de check te maken, de uitslag te mailen en contact op te nemen. De mail wordt verzonden via FormSubmit.</span></label>
       <button class="knop" id="knop" type="submit">Check mijn adres</button>
       <div class="fout" id="fout" role="alert"></div>
       <ol class="stappen" id="stappen" hidden>
@@ -256,15 +256,22 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;
 const nl = v => String(v).replace('.', ',');
 const WENS = {uitbouw:'Uitbouw achterzijde', opbouw:'Opbouw (extra bouwlaag)', dakkapel:'Dakkapel', splitsing:'Woning splitsen'};
 const KLEUR = {groen:'var(--groen)', oranje:'var(--oranje)', rood:'var(--rood)'};
+const BEHEER = new URLSearchParams(location.search).has('beheer');
+const RAPPORT_ACTIEF = BEHEER; // betaald rapport alleen zichtbaar in testmodus (?beheer)
 const store = { get(){ try { return JSON.parse(localStorage.getItem('sc-log') || '[]'); } catch(e){ return []; } }, set(v){ try { localStorage.setItem('sc-log', JSON.stringify(v)); } catch(e){} } };
 
-/* ---------- tabs ---------- */
+/* ---------- tabs (alleen in beheermodus) ---------- */
+if (!BEHEER) { document.querySelector('.tabs').hidden = true; document.getElementById('mail').hidden = true; }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x === b));
   $('#view-klant').hidden = b.dataset.view !== 'klant';
   $('#view-beheer').hidden = b.dataset.view !== 'beheer';
   if (b.dataset.view === 'beheer') { renderLog(); renderOrders(); }
 }));
+
+/* ---------- signalen naar de omringende website (iframe) ---------- */
+function meld(event, data){ try { if (window.parent !== window) window.parent.postMessage({ type: 'mv-vergunningscheck', event, ...(data || {}) }, '*'); } catch(e){} }
+try { if (window.parent !== window && 'ResizeObserver' in window) new ResizeObserver(() => meld('hoogte', { hoogte: document.documentElement.scrollHeight })).observe(document.body); } catch(e){}
 
 /* ---------- wens ---------- */
 function wensUI(){ const w = document.querySelector('input[name=wens]:checked').value; $('#v-diepte').hidden = w !== 'uitbouw'; $('#v-dakvlak').hidden = w !== 'dakkapel'; }
@@ -300,7 +307,7 @@ function volgende(s){ const order = ['adres','woning','plan','regels','mail']; c
 function zonesBalk(F){
   const z = F.zonesAchter.slice(0, 5); const tot = Math.max(8, ...z.map(x => x.tot));
   const cls = x => /waarde|landschap|cultuur/i.test(x.dubbel) ? 'zone-waarde' : /tuin|wonen|erf/i.test(x.bestemming) ? 'zone-tuin' : 'zone-overig';
-  return `<div class="zones" aria-label="Strook achter de woning"><div class="zone-pand" style="flex:0 0 18%">woning</div>${z.map(x => `<div class="${cls(x)}" style="flex:${Math.max(.6, x.tot - x.van)}" title="${esc(x.bestemming + (x.dubbel ? ' + ' + x.dubbel : ''))}">${nl(x.van)}–${nl(x.tot)} m ${esc(x.dubbel ? x.dubbel.replace('Waarde - ', '') : x.bestemming)}</div>`).join('')}</div><div class="mono">Gemeten vanaf de achtergevel, langs de lijn door uw adres.</div>`;
+  return `<div class="zones" aria-label="Strook achter de woning"><div class="zone-pand" style="flex:0 0 18%">woning</div>${z.map(x => `<div class="${cls(x)}" style="flex:${Math.max(.6, x.tot - x.van)}" title="${esc(x.bestemming + (x.dubbel ? ' + ' + x.dubbel : ''))}">${nl(x.van)}–${nl(x.tot)} m ${esc(x.dubbel ? x.dubbel.replace('Waarde - ', '') : x.bestemming)}</div>`).join('')}</div><div class="mono">Gemeten vanaf de achtergevel, langs de lijn door jouw adres.</div>`;
 }
 function kaartSVG(K){
   if (!K) return '';
@@ -321,14 +328,14 @@ function kaartSVG(K){
       ${K.pand ? `<path d="${P(K.pand)}" fill="rgba(20,32,43,.55)" stroke="#FFFFFF" stroke-width="${lw * 1.4}"/>` : ''}
       <path d="${P(K.perceel)}" fill="none" stroke="#FFD166" stroke-width="${lw * 1.6}"/>
     </svg></div>
-    <div class="legenda"><span><i style="border:2px solid #FFD166"></i>Perceelgrens</span><span><i style="background:rgba(122,162,255,.7)"></i>Hier mag u vergunningvrij bijbouwen</span><span><i style="border:1.5px dashed var(--mut)"></i>Zone tot 4 m achter de woning</span><span><i style="background:#14202B"></i>Woning</span><span><i style="background:repeating-linear-gradient(45deg,var(--mut) 0 2px,transparent 2px 5px)"></i>Bestaande bijgebouwen</span></div>
+    <div class="legenda"><span><i style="border:2px solid #FFD166"></i>Perceelgrens</span><span><i style="background:rgba(122,162,255,.7)"></i>Hier mag je vergunningvrij bijbouwen</span><span><i style="border:1.5px dashed var(--mut)"></i>Zone tot 4 m achter de woning</span><span><i style="background:#14202B"></i>Woning</span><span><i style="background:repeating-linear-gradient(45deg,var(--mut) 0 2px,transparent 2px 5px)"></i>Bestaande bijgebouwen</span></div>
     <div class="bron-kaart">Luchtfoto PDOK · perceel Kadaster (BRK) · gebouwen BAG</div>`;
 }
 function berekening(F){
   if (F.achtererf == null) return '';
   const staf = F.achtererf <= 100 ? `50% van ${nl(F.achtererf)} m²` : F.achtererf <= 300 ? `50 m² + 20% van ${nl(Math.round((F.achtererf - 100) * 10) / 10)} m²` : `90 m² + 10% van ${nl(Math.round((F.achtererf - 300) * 10) / 10)} m² (max. 150 m²)`;
   return `<div class="reken">
-    <div>1. Bebouwingsgebied<small>uw tuin vanaf 1 m achter de voorgevel, zonder de woning</small></div><div class="w">${nl(F.achtererf)} m²</div>
+    <div>1. Bebouwingsgebied<small>je tuin vanaf 1 m achter de voorgevel, zonder de woning</small></div><div class="w">${nl(F.achtererf)} m²</div>
     <div>2. Maximaal vergunningvrij<small>${staf}</small></div><div class="w">${nl(F.maxBijbehorend)} m²</div>
     <div>3. Al bebouwd met bijgebouwen<small>${F.bijgebouwen.aantal ? F.bijgebouwen.aantal + ' bijgebouw' + (F.bijgebouwen.aantal > 1 ? 'en' : '') + ' volgens het Kadaster' : 'geen losse bijgebouwen gevonden'}</small></div><div class="w">− ${nl(F.bijgebouwen.opp)} m²</div>
     <div class="tot">Nog vergunningvrij bij te bouwen</div><div class="w tot">${nl(F.resterend)} m²</div>
@@ -336,26 +343,31 @@ function berekening(F){
   <details class="uitleg"><summary>Waar komt de staffel vandaan?</summary><p>Landelijke regel (bruidsschat omgevingsplan art. 22.36): tot 100 m² bebouwingsgebied mag 50% worden bebouwd; van 100 tot 300 m² is dat 50 m² plus 20% van wat boven de 100 m² ligt; boven 300 m² is het 90 m² plus 10% van het deel boven 300 m², met een maximum van 150 m². Een aanbouw die al vastzit aan de woning telt ook mee, maar die rekent het Kadaster tot de woning; daarom staat hij hier niet bij stap 3.</p></details>`;
 }
 const UITLEG4 = `<div class="regels4">
-  <div><h5>Dicht bij huis (tot 4 m van de achtergevel)</h5><ul><li>Maximaal 1 bouwlaag, dus geen verdieping erop.</li><li>Niet hoger dan 5 m en niet hoger dan 30 cm boven de vloer van de eerste verdieping.</li><li>Hier mag u ook wonen: keuken, woonkamer of slaapkamer.</li></ul></div>
+  <div><h5>Dicht bij huis (tot 4 m van de achtergevel)</h5><ul><li>Maximaal 1 bouwlaag, dus geen verdieping erop.</li><li>Niet hoger dan 5 m en niet hoger dan 30 cm boven de vloer van de eerste verdieping.</li><li>Hier mag je ook wonen: keuken, woonkamer of slaapkamer.</li></ul></div>
   <div><h5>Verder in de tuin (meer dan 4 m)</h5><ul><li>Alleen voor bijgebruik: schuur, garage, berging, hobbyruimte.</li><li>Plat dak tot 3 m hoog; hoger alleen met een schuin dak (nok max. 5 m).</li><li>Geen slaapkamer of woonruimte, behalve voor mantelzorg.</li></ul></div>
   <div><h5>Altijd</h5><ul><li>Meer dan 1 m van de stoep of de openbare weg.</li><li>Geen dakterras of balkon op het bijgebouw.</li><li>Ook vergunningvrij moet het bouwbesluit kloppen: constructie, brand, isolatie.</li></ul></div>
   <div><h5>Toestemming nodig</h5><ul><li>Huurwoning: toestemming van de verhuurder.</li><li>Appartement: toestemming van de VvE.</li><li>Monument of beschermd gezicht: bijna altijd een vergunning.</li></ul></div>
 </div>`;
 /* ---------- vervolg: rapport (€ 50) en offerte ---------- */
 const BETAAL = { prijs: 50, link: '', naam: 'Revolut', levering: 'direct' }; // link: Revolut Business betaallink (Merchant → Payment links → Create link, € 50, 'accept multiple payments'); sandbox-link voor intern testen. levering 'direct' = rapport meteen na bestelling; 'na-betaling' kan pas met een betaalkoppeling met webhook (klein stukje server)
-const fasen = (nu) => `<ol class="fasen">
+const fasen = (nu) => !RAPPORT_ACTIEF ? `<ol class="fasen">
+  <li class="${nu > 1 ? 'klaar' : 'nu'}"><b>1</b><span>Gratis vergunningscheck<br><span class="mono">stoplicht en m²</span></span></li>
+  <li class="${nu >= 2 ? 'nu' : ''}"><b>2</b><span>Persoonlijk advies<br><span class="mono">gesprek over je plan</span></span></li>
+  <li><b>3</b><span>Tekening en gemeente<br><span class="mono">offerte per stap</span></span></li></ol>` : `<ol class="fasen">
   <li class="${nu > 1 ? 'klaar' : 'nu'}"><b>1</b><span>Gratis snelcheck<br><span class="mono">stoplicht en m²</span></span></li>
   <li class="${nu === 2 ? 'nu' : nu > 2 ? 'klaar' : ''}"><b>2</b><span>Rapport op maat<br><span class="mono">€ ${BETAAL.prijs}, binnen 2 werkdagen</span></span></li>
   <li class="${nu === 3 ? 'nu' : ''}"><b>3</b><span>Tekening en gemeente<br><span class="mono">€ ${BETAAL.prijs} verrekend</span></span></li></ol>`;
 function vervolgHTML(F, B){
-  return `<h4>Wat kunt u nu doen</h4>
+  return `<h4>Wat kun je nu doen</h4>
   <div class="vervolg">
-    <div><h5>Rapport op maat voor uw adres</h5><div class="prijs">€ ${BETAAL.prijs}<small> incl. btw</small></div>
-      <ul><li>Kaart van uw perceel met het gebied waar u mag bouwen</li><li>Berekening van uw vergunningvrije m², stap voor stap</li><li>De regels van uw gemeente in gewone taal${F.plan && F.plan.naam ? ` (${esc(F.plan.naam)})` : ''}</li><li>Automatisch gecontroleerd op ${CONTROLES_N} punten, direct in uw mail als PDF</li><li>Niet tevreden? Binnen 14 dagen uw geld terug</li></ul>
-      <div class="terug">Laat u daarna de vergunning door ons aanvragen, dan verrekenen we de € ${BETAAL.prijs} met die opdracht.</div>
-      <button class="knop" type="button" id="bestelknop">Rapport bestellen</button></div>
+    ${RAPPORT_ACTIEF ? `<div><h5>Rapport op maat voor jouw adres</h5><div class="prijs">€ ${BETAAL.prijs}<small> incl. btw</small></div>
+      <ul><li>Kaart van je perceel met het gebied waar je mag bouwen</li><li>Berekening van je vergunningvrije m², stap voor stap</li><li>De regels van je gemeente in gewone taal${F.plan && F.plan.naam ? ` (${esc(F.plan.naam)})` : ''}</li><li>Automatisch gecontroleerd op ${CONTROLES_N} punten, direct in je mail als PDF</li><li>Niet tevreden? Binnen 14 dagen je geld terug</li></ul>
+      <div class="terug">Laat je daarna de vergunning door ons aanvragen, dan verrekenen we de € ${BETAAL.prijs} met die opdracht.</div>
+      <button class="knop" type="button" id="bestelknop">Rapport bestellen</button></div>` : `<div><h5>Persoonlijk advies over je uitslag</h5><div class="prijs">Gratis<small> eerste gesprek</small></div>
+      <ul><li>We lezen de regels voor jouw adres na</li><li>We vertellen welke route past: vergunningvrij, vergunning of afwijking</li><li>Je weet waar je aan toe bent voordat je kosten maakt</li></ul>
+      <button class="knop" type="button" id="adviesknop">Vraag advies aan</button></div>`}
     <div><h5>Tekening en het gesprek met de gemeente</h5><div class="prijs">Offerte<small> op basis van uren</small></div>
-      <ul><li>Wij maken de bouwkundige tekeningen van uw plan</li><li>Wij voeren het vooroverleg met de gemeente en dienen de aanvraag in</li><li>U krijgt vooraf een duidelijke prijs per stap</li><li>Betaling in drie termijnen (30/40/30)</li></ul>
+      <ul><li>Wij maken de bouwkundige tekeningen van je plan</li><li>Wij voeren het vooroverleg met de gemeente en dienen de aanvraag in</li><li>Je krijgt vooraf een duidelijke prijs per stap</li><li>Betaling in drie termijnen (30/40/30)</li></ul>
       <div class="terug">${B.stoplicht === 'groen' ? 'Ook als het vergunningvrij kan, helpen we met tekeningen en een melding bij de gemeente.' : 'Bij een oranje of rode uitslag is dit de route naar een vergunning.'}</div>
       <button class="knop licht2" type="button" id="offerteknop">Offerte aanvragen</button></div>
   </div>
@@ -367,7 +379,7 @@ function renderResultaat(F, B, w, ms){
   $('#resultaat').innerHTML = fasen(1) + `
     <div class="res-kop"><h2>${esc(F.adres)}</h2><span class="mono">${esc(wensTxt)} · ${nl((ms/1000).toFixed(1))} s</span></div>
     <div class="uitslag s-${B.stoplicht}"><div class="licht">${lampen}</div><div><h3>${esc(B.kop)}</h3><p>${esc(B.tekst)}</p><p class="stap"><b>Volgende stap:</b> ${esc(B.stap)}</p></div></div>
-    ${F.resterend != null ? `<div class="m2"><div class="getal">${nl(Math.round(F.resterend))}<small> m²</small></div><p>Zoveel mag u volgens de landelijke regels nog <b>zonder vergunning</b> bijbouwen in uw achtertuin, bijvoorbeeld een aanbouw, schuur of overkapping.</p></div>` : ''}
+    ${F.resterend != null ? `<div class="m2"><div class="getal">${nl(Math.round(F.resterend))}<small> m²</small></div><p>Zoveel mag je volgens de landelijke regels nog <b>zonder vergunning</b> bijbouwen in je achtertuin, bijvoorbeeld een aanbouw, schuur of overkapping.</p></div>` : ''}
     ${kaartSVG(F.kaart)}
     <dl class="feiten">
       <div><dt>Bouwjaar</dt><dd>${esc(F.bag.bouwjaar ?? '–')}</dd></div>
@@ -376,14 +388,15 @@ function renderResultaat(F, B, w, ms){
       <div><dt>Woning (grond)</dt><dd>${F.hoofdgebouw != null ? nl(Math.round(F.hoofdgebouw)) + ' m²' : '–'}</dd></div>
     </dl>
     ${F.achtererf != null ? '<h4>Hoe is dit berekend</h4>' + berekening(F) : ''}
-    <h4>Wat mag u zonder vergunning in de achtertuin</h4>${UITLEG4}
-    ${F.zonesAchter.length ? '<h4>Wat ligt er achter uw woning</h4>' + zonesBalk(F) : ''}
-    <h4>Wat geldt er op uw adres</h4>
+    <h4>Wat mag je zonder vergunning in de achtertuin</h4>${UITLEG4}
+    ${F.zonesAchter.length ? '<h4>Wat ligt er achter je woning</h4>' + zonesBalk(F) : ''}
+    <h4>Wat geldt er op jouw adres</h4>
     <ul class="regels">${B.regels.filter(r => !(F.zonesAchter.length && r.titel === 'Achter de woning')).map(r => `<li><span class="t">${esc(r.titel)}</span><span>${esc(r.tekst)}${r.bron ? ` <a href="${esc(r.bron)}" target="_blank" rel="noopener">bron</a>` : ''}</span></li>`).join('')}</ul>
     <h4>Laat dit nog controleren</h4>
     <ul class="controle">${B.controle.map(c => `<li>${esc(c)}</li>`).join('')}</ul>
     ${vervolgHTML(F, B)}`;
-  $('#bestelknop').addEventListener('click', () => renderBestel('rapport'));
+  $('#bestelknop')?.addEventListener('click', () => renderBestel('rapport'));
+  $('#adviesknop')?.addEventListener('click', () => renderBestel('offerte'));
   $('#offerteknop').addEventListener('click', () => renderBestel('offerte'));
 }
 
@@ -398,8 +411,8 @@ function renderBestel(soort){
     <h4>${rapport ? `Rapport bestellen – € ${BETAAL.prijs} incl. btw` : 'Offerte aanvragen voor tekening en gemeente'}</h4>
     <div class="rij"><div class="veld"><label for="b-naam">Naam</label><input id="b-naam" type="text" value="${esc(naam)}" autocomplete="name"></div><div class="veld"><label for="b-tel">Telefoon (optioneel)</label><input id="b-tel" type="tel" autocomplete="tel"></div></div>
     <div class="veld"><label for="b-email">E-mailadres</label><input id="b-email" type="email" value="${esc(email)}" autocomplete="email"></div>
-    <div class="veld"><label for="b-opm">${rapport ? 'Wat wilt u precies bouwen? (optioneel)' : 'Vertel kort wat u wilt'}</label><textarea id="b-opm" placeholder="${rapport ? 'Bijv. schuur van 5 x 9 m met kap, naast de woning' : 'Bijv. uitbouw 3 m met tekeningen en aanvraag'}"></textarea></div>
-    ${rapport ? `<label class="check"><input id="b-akkoord" type="checkbox"><span>Ik bestel het rapport voor ${esc(F.adres)} voor € ${BETAAL.prijs} incl. btw. Het rapport staat direct klaar en ik ontvang een betaalverzoek (iDEAL) per mail. Niet tevreden, dan binnen 14 dagen geld terug.</span></label>` : `<label class="check"><input id="b-akkoord" type="checkbox"><span>Ik wil een vrijblijvende offerte voor ${esc(F.adres)}. aivergunning.nl mag mij daarvoor mailen of bellen.</span></label>`}
+    <div class="veld"><label for="b-opm">${rapport ? 'Wat wil je precies bouwen? (optioneel)' : 'Vertel kort wat je wilt'}</label><textarea id="b-opm" placeholder="${rapport ? 'Bijv. schuur van 5 x 9 m met kap, naast de woning' : 'Bijv. uitbouw 3 m met tekeningen en aanvraag'}"></textarea></div>
+    ${rapport ? `<label class="check"><input id="b-akkoord" type="checkbox"><span>Ik bestel het rapport voor ${esc(F.adres)} voor € ${BETAAL.prijs} incl. btw. Het rapport staat direct klaar en ik ontvang een betaalverzoek (iDEAL) per mail. Niet tevreden, dan binnen 14 dagen geld terug.</span></label>` : `<label class="check"><input id="b-akkoord" type="checkbox"><span>Ik wil een vrijblijvende offerte voor ${esc(F.adres)}. Mijn Vergunning mag mij daarvoor mailen of bellen.</span></label>`}
     <button class="knop" type="submit" id="b-knop">${rapport ? 'Bestelling plaatsen' : 'Offerte aanvragen'}</button>
     <div class="fout" id="b-fout" role="alert"></div>
   </form>`;
@@ -408,20 +421,21 @@ function renderBestel(soort){
     e.preventDefault(); $('#b-fout').textContent = '';
     const b = { naam: $('#b-naam').value.trim(), email: $('#b-email').value.trim(), tel: $('#b-tel').value.trim(), opm: $('#b-opm').value.trim() };
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email)) return $('#b-fout').textContent = 'Vul een geldig e-mailadres in.';
-    if (!$('#b-akkoord').checked) return $('#b-fout').textContent = rapport ? 'Vink aan dat u het rapport bestelt.' : 'Vink aan dat we contact mogen opnemen.';
+    if (!$('#b-akkoord').checked) return $('#b-fout').textContent = rapport ? 'Vink aan dat je het rapport bestelt.' : 'Vink aan dat we contact mogen opnemen.';
     $('#b-knop').disabled = true; $('#b-knop').textContent = 'Bezig…';
     const nr = rapport ? orderNr() : '';
     try {
       await verstuurBestelling(soort, nr, b);
+      meld(rapport ? 'rapport_besteld' : 'advies_aangevraagd', { wens: laatste.w.wens, stoplicht: laatste.B.stoplicht });
       const ctr = rapport ? controles(laatste.F, laatste.B) : null;
       if (rapport) { const o = orders.get(); o.push({ nr, t: Date.now(), ...b, adres: laatste.F.adres, stoplicht: laatste.B.stoplicht, kop: laatste.B.kop, status: BETAAL.levering === 'direct' ? 'geleverd' : 'besteld', niveau: ctr.niveau, F: laatste.F, B: laatste.B, w: laatste.w }); orders.set(o); }
       const link = rapport ? rapportLink(laatste.w, nr, b.naam) : '';
       $('#bestel').innerHTML = `<div class="bestel"><div class="ok">${rapport
-        ? `<b>Bestelling ${esc(nr)} ontvangen.</b> Dank u wel, ${esc(b.naam || '')}. ${BETAAL.levering === 'direct' ? `Uw rapport staat klaar: <a href="${esc(link)}" target="_blank" rel="noopener">open het rapport</a> (printen of opslaan als PDF). De link staat ook in uw mail op ${esc(b.email)}.` : `Direct na betaling staat het rapport in uw mail op ${esc(b.email)}.`} ${BETAAL.link ? `<br><a class="knop" style="display:inline-block;width:auto;margin-top:10px;text-decoration:none" href="${esc(BETAAL.link)}" target="_blank" rel="noopener">Betaal € ${BETAAL.prijs} via ${esc(BETAAL.naam)}</a><br><span class="later">Vermeld bij de betaling uw bestelnummer ${esc(nr)}.</span>` : `<br>U ontvangt per mail een betaalverzoek van € ${BETAAL.prijs} (iDEAL).`}<br><span class="later">Laat u daarna de vergunning door ons aanvragen, dan verrekenen we de € ${BETAAL.prijs}.</span>`
-        : `<b>Aanvraag ontvangen.</b> Dank u wel, ${esc(b.naam || '')}. We nemen binnen 2 werkdagen contact met u op via ${esc(b.email)}${b.tel ? ' of ' + esc(b.tel) : ''}.`}</div></div>`;
+        ? `<b>Bestelling ${esc(nr)} ontvangen.</b> Dank je wel, ${esc(b.naam || '')}. ${BETAAL.levering === 'direct' ? `Je rapport staat klaar: <a href="${esc(link)}" target="_blank" rel="noopener">open het rapport</a> (printen of opslaan als PDF). De link staat ook in je mail op ${esc(b.email)}.` : `Direct na betaling staat het rapport in je mail op ${esc(b.email)}.`} ${BETAAL.link ? `<br><a class="knop" style="display:inline-block;width:auto;margin-top:10px;text-decoration:none" href="${esc(BETAAL.link)}" target="_blank" rel="noopener">Betaal € ${BETAAL.prijs} via ${esc(BETAAL.naam)}</a><br><span class="later">Vermeld bij de betaling je bestelnummer ${esc(nr)}.</span>` : `<br>Je ontvangt per mail een betaalverzoek van € ${BETAAL.prijs} (iDEAL).`}<br><span class="later">Laat je daarna de vergunning door ons aanvragen, dan verrekenen we de € ${BETAAL.prijs}.</span>`
+        : `<b>Aanvraag ontvangen.</b> Dank je wel, ${esc(b.naam || '')}. We nemen zo snel mogelijk contact met je op via ${esc(b.email)}${b.tel ? ' of ' + esc(b.tel) : ''}.`}</div></div>`;
       $('#resultaat .fasen').outerHTML = fasen(rapport ? 2 : 3);
       if (rapport && BETAAL.levering === 'direct' && !BETAAL.link) openRapport(laatste.F, laatste.B, laatste.w, { naam: b.naam, nr });
-    } catch (err) { $('#b-fout').textContent = 'Versturen lukte niet (' + err.message + '). Probeer het nog eens of mail naar info@aivergunning.nl.'; $('#b-knop').disabled = false; $('#b-knop').textContent = rapport ? 'Bestelling plaatsen' : 'Offerte aanvragen'; }
+    } catch (err) { $('#b-fout').textContent = 'Versturen lukte niet (' + err.message + '). Probeer het nog eens of mail naar info@mijn-vergunning.nl.'; $('#b-knop').disabled = false; $('#b-knop').textContent = rapport ? 'Bestelling plaatsen' : 'Offerte aanvragen'; }
   });
 }
 async function verstuurBestelling(soort, nr, b){
@@ -431,11 +445,11 @@ async function verstuurBestelling(soort, nr, b){
     _subject: rapport ? `${ctr.niveau === 'laag' ? '[CONTROLE NODIG] ' : ''}Rapportbestelling ${nr} (€ ${BETAAL.prijs}): ${F.adres}` : `Offerteaanvraag tekening + gemeente: ${F.adres}`,
     _template: 'table', _captcha: 'false',
     _autoresponse: rapport
-      ? [`Beste ${b.naam || 'heer/mevrouw'},`, '', `Dank voor uw bestelling van het rapport voor ${F.adres} (bestelnummer ${nr}).`, '',
-         ...(BETAAL.levering === 'direct' ? [`UW RAPPORT: ${link}`, 'Open de link, kies "Printen / opslaan als PDF" en u heeft het rapport als bestand. De link blijft werken.', ''] : [`Direct na betaling ontvangt u de link naar uw rapport.`, '']),
-         `Betaling: ${BETAAL.link ? `betaal € ${BETAAL.prijs} incl. btw via deze link: ${BETAAL.link} (vermeld bestelnummer ${nr}).` : `u ontvangt van ons een betaalverzoek van € ${BETAAL.prijs} incl. btw (iDEAL).`} Laat u daarna de vergunning door ons aanvragen, dan verrekenen we de € ${BETAAL.prijs} met die opdracht. Niet tevreden? Binnen 14 dagen uw geld terug.`, '',
-         'SAMENVATTING', ...rapportTekst(F, B, w, ctr), '', 'Met vriendelijke groet,', 'Casper Laan', 'aivergunning.nl'].join('\n')
-      : [`Beste ${b.naam || 'heer/mevrouw'},`, '', `Dank voor uw aanvraag voor ${F.adres}. We bekijken uw situatie en nemen binnen 2 werkdagen contact met u op voor een korte afstemming. Daarna ontvangt u een offerte met een prijs per stap.`, '', 'Met vriendelijke groet,', 'Casper Laan', 'aivergunning.nl'].join('\n'),
+      ? [(b.naam ? `Beste ${b.naam},` : 'Hallo,'), '', `Dank voor je bestelling van het rapport voor ${F.adres} (bestelnummer ${nr}).`, '',
+         ...(BETAAL.levering === 'direct' ? [`JE RAPPORT: ${link}`, 'Open de link, kies "Printen / opslaan als PDF" en je hebt het rapport als bestand. De link blijft werken.', ''] : [`Direct na betaling ontvang je de link naar je rapport.`, '']),
+         `Betaling: ${BETAAL.link ? `betaal € ${BETAAL.prijs} incl. btw via deze link: ${BETAAL.link} (vermeld bestelnummer ${nr}).` : `je ontvangt van ons een betaalverzoek van € ${BETAAL.prijs} incl. btw (iDEAL).`} Laat je daarna de vergunning door ons aanvragen, dan verrekenen we de € ${BETAAL.prijs} met die opdracht. Niet tevreden? Binnen 14 dagen je geld terug.`, '',
+         'SAMENVATTING', ...rapportTekst(F, B, w, ctr), '', 'Met vriendelijke groet,', 'Casper Laan', 'Mijn Vergunning', 'www.mijn-vergunning.nl'].join('\n')
+      : [(b.naam ? `Beste ${b.naam},` : 'Hallo,'), '', `Dank voor je aanvraag voor ${F.adres}. We bekijken je situatie en nemen zo snel mogelijk contact met je op voor een korte afstemming. Daarna ontvang je een offerte met een prijs per stap.`, '', 'Met vriendelijke groet,', 'Casper Laan', 'Mijn Vergunning', 'www.mijn-vergunning.nl'].join('\n'),
     name: b.naam || '(geen naam)', email: b.email, Telefoon: b.tel || '-', Soort: rapport ? `Rapport € ${BETAAL.prijs} – bestelnummer ${nr} – ${BETAAL.levering === 'direct' ? 'rapport direct geleverd' : 'leveren na betaling'} – BETAALVERZOEK NOG STUREN` : 'Offerte tekening + gemeente',
     ...(rapport ? { Rapport: link, Controle: `${ctr.niveau.toUpperCase()}: ${ctr.ok}/${ctr.items.length} controles goed${ctr.niveau === 'laag' ? ' – ZELF NAKIJKEN: ' + ctr.items.filter(c => c.ok === false).map(c => c.naam).join(', ') : ctr.niveau === 'middel' ? ' – let op: ' + ctr.items.filter(c => c.ok === null).map(c => c.naam).join(', ') : ''}` } : {}),
     Adres: F.adres, Gemeente: F.gemeente, Wens: WENS[w.wens] + (w.wens === 'uitbouw' ? `, ${w.diepte} m` : w.wens === 'dakkapel' ? `, ${w.dakvlak}` : ''), Toelichting_klant: b.opm || '-',
@@ -448,25 +462,25 @@ async function verstuurBestelling(soort, nr, b){
   return j;
 }
 function renderMail(F, B, w, email, naam){
-  const vn = naam || 'heer/mevrouw'; const aanhef = naam ? `Beste ${esc(naam)},` : 'Beste heer/mevrouw,';
+  const aanhef = naam ? `Beste ${esc(naam)},` : 'Hallo,';
   const tijd = new Date().toLocaleString('nl-NL', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
-  const onderwerp = `Uw snelcheck: ${B.kop.toLowerCase()} – ${F.adres.split(',')[0]}`;
+  const onderwerp = `Je vergunningscheck: ${B.kop.toLowerCase()} – ${F.adres.split(',')[0]}`;
   const top = B.regels.filter(r => !/Achter de woning|Gebiedsaanduidingen/.test(r.titel)).slice(0, 4);
   $('#mail').innerHTML = `
     <div class="mail-bar"><svg viewBox="0 0 20 14" width="18" height="13" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="1" width="18" height="12" rx="1.5"/><path d="M1.5 2l8.5 6 8.5-6"/></svg><span><b>Inbox</b> van ${esc(email)}</span><span class="voorbeeld-label" style="margin-left:auto">voorbeeld van de mail</span></div>
-    <div class="mail-kop"><div class="onderwerp">${esc(onderwerp)}</div><div><b>Van:</b> aivergunning.nl &lt;check@aivergunning.nl&gt;</div><div><b>Aan:</b> ${esc(email)}</div><div class="mono">${esc(tijd)}</div></div>
+    <div class="mail-kop"><div class="onderwerp">${esc(onderwerp)}</div><div><b>Van:</b> Mijn Vergunning &lt;info@mijn-vergunning.nl&gt;</div><div><b>Aan:</b> ${esc(email)}</div><div class="mono">${esc(tijd)}</div></div>
     <div class="mail-body">
       <p>${aanhef}</p>
-      <p>Bedankt voor uw check. Voor <b>${esc(WENS[w.wens].toLowerCase())}</b> op <b>${esc(F.adres)}</b> is dit onze eerste inschatting:</p>
+      <p>Bedankt voor je check. Voor <b>${esc(WENS[w.wens].toLowerCase())}</b> op <b>${esc(F.adres)}</b> is dit onze eerste inschatting:</p>
       <div class="uitslag s-${B.stoplicht}" style="margin:12px 0"><div><h3>${esc(B.kop)}</h3><p>${esc(B.tekst)}</p></div></div>
-      ${F.resterend != null ? `<p>U mag in uw achtertuin nog ca. <b>${nl(Math.round(F.resterend))} m²</b> zonder vergunning bijbouwen (bebouwingsgebied ${nl(F.achtererf)} m², maximaal ${nl(F.maxBijbehorend)} m², al bebouwd ${nl(F.bijgebouwen.opp)} m²).</p>` : ''}
+      ${F.resterend != null ? `<p>Je mag in je achtertuin nog ca. <b>${nl(Math.round(F.resterend))} m²</b> zonder vergunning bijbouwen (bebouwingsgebied ${nl(F.achtererf)} m², maximaal ${nl(F.maxBijbehorend)} m², al bebouwd ${nl(F.bijgebouwen.opp)} m²).</p>` : ''}
       <p><b>Wat geldt er:</b></p>
       <ul>${top.map(r => `<li>${esc(r.titel)}: ${esc(r.tekst)}</li>`).join('')}</ul>
       <p><b>Volgende stap:</b> ${esc(B.stap)}</p>
-      <p><b>Wilt u het zeker weten?</b> Voor € ${BETAAL.prijs} maken we een rapport op maat: kaart van uw perceel, berekening van uw vergunningvrije m² en de regels van uw gemeente, gecontroleerd door een specialist en binnen 2 werkdagen in uw mail. Laat u daarna de vergunning door ons aanvragen, dan verrekenen we die € ${BETAAL.prijs}.</p>
+      <p><b>Wil je het zeker weten?</b> Voor € ${BETAAL.prijs} maken we een rapport op maat: kaart van je perceel, berekening van je vergunningvrije m² en de regels van je gemeente, gecontroleerd door een specialist en binnen 2 werkdagen in je mail. Laat je daarna de vergunning door ons aanvragen, dan verrekenen we die € ${BETAAL.prijs}.</p>
       <p><a class="cta" href="#" onclick="return false">Rapport bestellen (€ ${BETAAL.prijs})</a> &nbsp; <a href="#" onclick="return false">of vraag een offerte aan voor tekening en gemeente</a></p>
-      <p style="font-size:12px;color:var(--mut)">Dit is een automatische eerste indicatie op basis van openbare gegevens. Er kunnen geen rechten aan worden ontleend. Wilt u zekerheid, dan toetsen wij uw plan volledig en verzorgen we de aanvraag.</p>
-      <p>Met vriendelijke groet,<br>Casper Laan<br>aivergunning.nl</p>
+      <p style="font-size:12px;color:var(--mut)">Dit is een automatische eerste indicatie op basis van openbare gegevens. Er kunnen geen rechten aan worden ontleend. Wil je zekerheid, dan toetsen wij je plan volledig en verzorgen we de aanvraag.</p>
+      <p>Met vriendelijke groet,<br>Casper Laan<br>Mijn Vergunning</p>
     </div>
     <div class="mail-acties"><button class="knop2" id="kopieer">Kopieer mailtekst</button><button class="knop2" id="rapport">Open rapport om te printen</button></div>`;
   $('#kopieer').addEventListener('click', async () => {
@@ -556,25 +570,25 @@ details.uitleg{margin-top:2mm;font-size:9pt;color:var(--mut)}details.uitleg summ
 .ctr{border:1px solid var(--line);border-radius:2mm;overflow:hidden;break-inside:avoid}.ctr div{display:grid;grid-template-columns:6mm 48mm 1fr;gap:2mm;padding:1.6mm 3mm;border-bottom:1px solid var(--line);font-size:9pt;align-items:baseline}.ctr div:last-child{border-bottom:0}.ctr i{font-style:normal;font-weight:700}.ctr .ok i{color:var(--groen)}.ctr .let i{color:var(--oranje)}.ctr .fout i{color:var(--rood)}.ctr span:last-child{color:var(--mut)}.ctr .kop{background:var(--bg);font-weight:600;grid-template-columns:1fr;font-size:9.5pt}
 .knoppen{position:fixed;bottom:16px;right:16px;display:flex;gap:6px}.knoppen button{font:600 13px system-ui;padding:8px 14px;border-radius:6px;border:0;background:var(--acc);color:#fff;cursor:pointer}
 </style></head><body><div class="knoppen geen"><button onclick="print()">Printen / opslaan als PDF</button></div><div class="vel">
-<div class="top"><div class="logo">ai<span>vergunning</span>.nl</div><div class="meta">Rapport ${esc(o.nr || '')}<br>${esc(datum)}<br>${o.naam ? 'Voor ' + esc(o.naam) : ''}<br>Betrouwbaarheid: <b>${ctr.niveau}</b> (${ctr.ok}/${ctr.items.length} controles)</div></div>
-<h1>${esc(F.adres)}</h1><p class="sub">Uw plan: <b>${esc(wensTxt)}</b> · gemeente ${esc(F.gemeente)}</p>
+<div class="top"><div class="logo">Mijn <span>Vergunning</span></div><div class="meta">Rapport ${esc(o.nr || '')}<br>${esc(datum)}<br>${o.naam ? 'Voor ' + esc(o.naam) : ''}<br>Betrouwbaarheid: <b>${ctr.niveau}</b> (${ctr.ok}/${ctr.items.length} controles)</div></div>
+<h1>${esc(F.adres)}</h1><p class="sub">Je plan: <b>${esc(wensTxt)}</b> · gemeente ${esc(F.gemeente)}</p>
 <h2>1. Uitkomst in één oogopslag</h2>
 <div class="uit"><div><h3>${esc(B.kop)}</h3><p>${esc(B.tekst)}</p><p class="stap"><b>Volgende stap:</b> ${esc(B.stap)}</p></div></div>
-${F.resterend != null ? `<div class="m2"><div class="getal">${nl(Math.round(F.resterend))}<small> m²</small></div><p>Zoveel mag u volgens de landelijke regels nog <b>zonder vergunning</b> bijbouwen in uw achtertuin: een aanbouw, schuur of overkapping. Hoe dat is berekend staat in hoofdstuk 3.</p></div>` : ''}
-<h2>2. Uw perceel op de kaart</h2>${kaart || '<p class="mono">Geen kaart beschikbaar.</p>'}
-${F.achtererf != null ? '<h2>3. Berekening van uw vergunningvrije ruimte</h2>' + berekening(F).replace('<details class="uitleg">', '<details class="uitleg" open>') : ''}
-<h2>${F.achtererf != null ? 4 : 3}. Wat mag u zonder vergunning bouwen</h2>${UITLEG4}
-<h2>${F.achtererf != null ? 5 : 4}. Wat geldt er op uw adres</h2>
+${F.resterend != null ? `<div class="m2"><div class="getal">${nl(Math.round(F.resterend))}<small> m²</small></div><p>Zoveel mag je volgens de landelijke regels nog <b>zonder vergunning</b> bijbouwen in je achtertuin: een aanbouw, schuur of overkapping. Hoe dat is berekend staat in hoofdstuk 3.</p></div>` : ''}
+<h2>2. Je perceel op de kaart</h2>${kaart || '<p class="mono">Geen kaart beschikbaar.</p>'}
+${F.achtererf != null ? '<h2>3. Berekening van je vergunningvrije ruimte</h2>' + berekening(F).replace('<details class="uitleg">', '<details class="uitleg" open>') : ''}
+<h2>${F.achtererf != null ? 4 : 3}. Wat mag je zonder vergunning bouwen</h2>${UITLEG4}
+<h2>${F.achtererf != null ? 5 : 4}. Wat geldt er op jouw adres</h2>
 ${F.zonesAchter.length ? zonesBalk(F) : ''}
 <ul class="regels">${B.regels.map(r => `<li><span class="t">${esc(r.titel)}</span><span>${esc(r.tekst)}${r.bron ? ` <a href="${esc(r.bron)}">bron</a>` : ''}</span></li>`).join('')}</ul>
 <h2>${F.achtererf != null ? 6 : 5}. Ingebouwde controles</h2>
 <div class="ctr"><div class="kop">Automatisch gecontroleerd op ${esc(datum)} · ${ctr.ok} goed, ${ctr.let} aandachtspunt${ctr.let === 1 ? '' : 'en'}, ${ctr.fout} niet gelukt · betrouwbaarheid ${ctr.niveau}</div>${ctr.items.map(c => `<div class="${c.ok === true ? 'ok' : c.ok === null ? 'let' : 'fout'}"><i>${c.ok === true ? '✓' : c.ok === null ? '!' : '✗'}</i><span>${esc(c.naam)}</span><span>${esc(c.tekst)}</span></div>`).join('')}</div>
 <p style="font-size:9pt;color:var(--mut);margin:2mm 0 0">Niet automatisch te zien, dus zelf nakijken of door ons laten uitzoeken:</p>
 <ul class="controle">${B.controle.map(c => `<li>${esc(c)}</li>`).join('')}</ul>
-<h2>${F.achtererf != null ? 7 : 6}. Gegevens van uw woning</h2>
+<h2>${F.achtererf != null ? 7 : 6}. Gegevens van je woning</h2>
 <div class="feiten">${feit('Bouwjaar', esc(F.bag.bouwjaar ?? '–'))}${feit('Woonoppervlak (BAG)', F.bag.oppervlakte ? F.bag.oppervlakte + ' m²' : '–')}${feit('Perceel', F.perceel ? esc(F.perceel.nr) + ' · ' + F.perceel.opp + ' m²' : '–')}${feit('Woning op de grond', F.hoofdgebouw != null ? nl(Math.round(F.hoofdgebouw)) + ' m²' : '–')}${feit('Bijgebouwen (Kadaster)', F.bijgebouwen ? F.bijgebouwen.aantal + ' · ' + nl(F.bijgebouwen.opp) + ' m²' : '–')}${feit('Plan', esc((F.plan && F.plan.naam) || '–'))}${feit('Bestemming', esc(F.bestemming || '–'))}${feit('Monument / beschermd gezicht', F.bescherming ? (F.bescherming.rijksmonument ? 'rijksmonument' : F.bescherming.gezicht ? 'beschermd gezicht' : 'nee') : '–')}</div>
 <h2>${F.achtererf != null ? 8 : 7}. Hoe nu verder</h2>
-<div class="vervolg"><div><h5>Vergunningvrij bouwen</h5><p>Past uw plan binnen de ruimte uit dit rapport, dan kunt u bouwen zonder vergunning. Let op het Bbl (constructie, brand, isolatie) en op afspraken met buren.</p></div><div><h5>Vergunning nodig, of wilt u zekerheid?</h5><p>Wij maken de bouwkundige tekeningen, voeren het gesprek met de gemeente en dienen de aanvraag in. Laat u dat door ons doen, dan verrekenen we de € ${BETAAL.prijs} van dit rapport. Mail naar info@aivergunning.nl.</p></div></div>
+<div class="vervolg"><div><h5>Vergunningvrij bouwen</h5><p>Past je plan binnen de ruimte uit dit rapport, dan kun je bouwen zonder vergunning. Let op het Bbl (constructie, brand, isolatie) en op afspraken met buren.</p></div><div><h5>Vergunning nodig, of wil je zekerheid?</h5><p>Wij maken de bouwkundige tekeningen, voeren het gesprek met de gemeente en dienen de aanvraag in. Laat je dat door ons doen, dan verrekenen we de € ${BETAAL.prijs} van dit rapport. Mail naar info@mijn-vergunning.nl.</p></div></div>
 <div class="voet"><b>Voorbehoud.</b> Dit rapport is opgesteld op basis van openbare registers (Kadaster BAG en BRK, Ruimtelijke plannen en luchtfoto via PDOK, RCE), geraadpleegd op ${esc(datum)}, en de landelijke regels voor vergunningvrij bouwen (bruidsschat omgevingsplan en Bbl). Het gaat uit van legaal gebouwde bestaande bouwwerken en van de kadastrale grenzen; afwijkingen ter plaatse, privaatrechtelijke afspraken, welstand en het vergunningenarchief van de gemeente zijn niet onderzocht. Nieuwe regels die de gemeente sinds 2024 in het omgevingsplan heeft gepubliceerd, zijn alleen meegenomen voor zover vermeld. Het rapport is automatisch opgesteld met ingebouwde controles (hoofdstuk 6); het is een indicatie, geen besluit, en alleen de gemeente beslist. Aan dit rapport kunnen geen rechten worden ontleend.</div>
 </div></body></html>`;
   return html;
@@ -589,7 +603,7 @@ function renderOrders(){
 }
 function renderLeeg(){
   $('#resultaat').innerHTML = `<div class="leeg"><div class="voorbeeld-label">Uitslag</div><p>Vul links een adres in. Hier verschijnt het stoplicht, wat er op het adres geldt en wat nog gecontroleerd moet worden.</p><p class="mono">Probeer bijvoorbeeld: Eksterstraat 45 Badhoevedorp, uitbouw 3 m</p></div>`;
-  $('#mail').innerHTML = `<div class="mail-bar"><svg viewBox="0 0 20 14" width="18" height="13" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="1" width="18" height="12" rx="1.5"/><path d="M1.5 2l8.5 6 8.5-6"/></svg><b>Inbox</b><span class="voorbeeld-label" style="margin-left:auto">hier komt de mail</span></div><div class="leeg">Na de check ziet u hier de mail die de klant krijgt.</div>`;
+  $('#mail').innerHTML = `<div class="mail-bar"><svg viewBox="0 0 20 14" width="18" height="13" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="1" width="18" height="12" rx="1.5"/><path d="M1.5 2l8.5 6 8.5-6"/></svg><b>Inbox</b><span class="voorbeeld-label" style="margin-left:auto">hier komt de mail</span></div><div class="leeg">Na de check zie je hier de mail die de klant krijgt.</div>`;
 }
 
 /* ---------- beheer ---------- */
@@ -612,7 +626,7 @@ $('#f').addEventListener('submit', async e => {
   const w = { adres, wens, diepte: Number($('#diepte').value) || 3, dakvlak: $('#dakvlak').value };
   if (adres.length < 5) return $('#fout').textContent = 'Vul een adres in met straat, huisnummer en plaats.';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return $('#fout').textContent = 'Vul een geldig e-mailadres in, daar sturen we de uitslag naartoe.';
-  if (!$('#akkoord').checked) return $('#fout').textContent = 'Vink aan dat we uw gegevens voor de check mogen gebruiken.';
+  if (!$('#akkoord').checked) return $('#fout').textContent = 'Vink aan dat we je gegevens voor de check mogen gebruiken.';
   $('#knop').disabled = true; $('#knop').textContent = 'Bezig met checken…';
   $('#stappen').hidden = false; document.querySelectorAll('#stappen li').forEach(li => { li.className = ''; li.querySelector('.wat').textContent = ''; });
   stapZet('adres', 'bezig');
@@ -630,6 +644,7 @@ $('#f').addEventListener('submit', async e => {
     catch (mailErr) { mailStatus = 'niet verstuurd'; stapZet('mail', '', 'niet verstuurd'); $('#fout').textContent = 'De check is klaar, maar de mail kon niet worden verstuurd (' + mailErr.message + '). Hieronder staat hoe hij eruitziet.'; }
     $('#mail .voorbeeld-label').textContent = mailStatus === 'verstuurd' ? 'verstuurd' : 'niet verstuurd – voorbeeld';
     const log = store.get(); log.push({ t: Date.now(), naam, email, adres: r.feiten.adres, gemeente: r.feiten.gemeente, wens, detail: wens === 'uitbouw' ? w.diepte + ' m' : wens === 'dakkapel' ? w.dakvlak : '', stoplicht: r.beoordeling.stoplicht, kop: r.beoordeling.kop, ms, mail: mailStatus, m2: r.feiten.resterend }); store.set(log);
+    meld('check_klaar', { wens, stoplicht: r.beoordeling.stoplicht });
     if (window.innerWidth < 900) $('#rechts').scrollIntoView({ behavior: 'smooth' });
   } catch (err) {
     const net = /fetch|network/i.test(String(err));
@@ -642,17 +657,18 @@ $('#f').addEventListener('submit', async e => {
 const MAIL_TO = 'bebd1bf77418ee08d6537b2013ba8a6e'; // FormSubmit-alias (geactiveerd 20-10-2026)
 function mailTekst(F, B, w, naam){
   const top = B.regels.filter(r => !/Achter de woning|Gebiedsaanduidingen/.test(r.titel)).slice(0, 4);
-  return [`${naam ? 'Beste ' + naam : 'Beste heer/mevrouw'},`, '',
-    `Bedankt voor uw check. Voor ${WENS[w.wens].toLowerCase()} op ${F.adres} is dit onze eerste inschatting:`, '',
+  return [(naam ? `Beste ${naam},` : 'Hallo,'), '',
+    `Bedankt voor je check. Voor ${WENS[w.wens].toLowerCase()} op ${F.adres} is dit onze eerste inschatting:`, '',
     `UITSLAG: ${B.kop.toUpperCase()}`, B.tekst, '',
     ...(F.resterend != null ? [`NOG VERGUNNINGVRIJ BIJ TE BOUWEN: ca. ${nl(Math.round(F.resterend))} m²`, `  1. Bebouwingsgebied (tuin vanaf 1 m achter de voorgevel): ${nl(F.achtererf)} m²`, `  2. Maximaal vergunningvrij volgens de landelijke staffel: ${nl(F.maxBijbehorend)} m²`, `  3. Al bebouwd met bijgebouwen: ${nl(F.bijgebouwen.opp)} m²`, ''] : []),
     'Wat geldt er:', ...top.map(r => `- ${r.titel}: ${r.tekst}`), '',
     `Volgende stap: ${B.stap}`, '',
     'Laat dit nog controleren:', ...B.controle.map(c => `- ${c}`), '',
-    `Wilt u het zeker weten? Voor € ${BETAAL.prijs} maken we een rapport op maat voor uw adres: kaart van uw perceel, berekening van uw vergunningvrije m² en de regels van uw gemeente in gewone taal, gecontroleerd door een specialist en binnen 2 werkdagen in uw mail. Laat u daarna de vergunning door ons aanvragen, dan verrekenen we die € ${BETAAL.prijs}. Bestellen kan via de pagina waar u de check deed, of beantwoord deze mail.`, '',
-    'Wilt u meteen tekeningen en het gesprek met de gemeente? Beantwoord deze mail, dan plannen we een kort belmoment en krijgt u een offerte met een prijs per stap.', '',
+    ...(RAPPORT_ACTIEF ? [] : ['Wil je zekerheid of de vergunning laten regelen? Beantwoord deze mail of bel 06 15 19 19 23, dan bespreken we je plannen. Het eerste gesprek is gratis.', '']),
+    ...(!RAPPORT_ACTIEF ? [] : [`Wil je het zeker weten? Voor € ${BETAAL.prijs} maken we een rapport op maat voor jouw adres: kaart van je perceel, berekening van je vergunningvrije m² en de regels van je gemeente in gewone taal, gecontroleerd door een specialist en binnen 2 werkdagen in je mail. Laat je daarna de vergunning door ons aanvragen, dan verrekenen we die € ${BETAAL.prijs}. Bestellen kan via de pagina waar je de check deed, of beantwoord deze mail.`, '']),
+    ...(RAPPORT_ACTIEF ? ['Wil je meteen tekeningen en het gesprek met de gemeente? Beantwoord deze mail, dan plannen we een kort belmoment en krijg je een offerte met een prijs per stap.', ''] : []),
     'Dit is een automatische eerste indicatie op basis van openbare gegevens (Kadaster, Ruimtelijke plannen via PDOK). Er kunnen geen rechten aan worden ontleend.', '',
-    'Met vriendelijke groet,', 'Casper Laan', 'aivergunning.nl'].join('\n');
+    'Met vriendelijke groet,', 'Casper Laan', 'Mijn Vergunning', 'www.mijn-vergunning.nl'].join('\n');
 }
 async function verstuur(F, B, w, email, naam){
   const body = {
@@ -682,7 +698,7 @@ if (rp) {
       const r = await snelcheck({ ...w, onStap: (st, wat) => { const e = document.getElementById('rp-stap'); if (e) e.textContent = wat || st; } });
       if (r.fout) throw new Error(r.fout);
       document.open(); document.write(rapportHTML(r.feiten, r.beoordeling, w, { nr: o.n, naam: o.k })); document.close();
-    } catch (err) { document.body.innerHTML = '<div class="wrap"><div class="card" style="margin-top:40px;max-width:520px"><h2>Rapport kon niet worden gemaakt</h2><p>' + esc(err.message || err) + '</p><p>Probeer het later opnieuw of mail naar info@aivergunning.nl.</p></div></div>'; }
+    } catch (err) { document.body.innerHTML = '<div class="wrap"><div class="card" style="margin-top:40px;max-width:520px"><h2>Rapport kon niet worden gemaakt</h2><p>' + esc(err.message || err) + '</p><p>Probeer het later opnieuw of mail naar info@mijn-vergunning.nl.</p></div></div>'; }
   })();
 } else renderLeeg();
 })();
