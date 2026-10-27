@@ -22,6 +22,8 @@
 .mvc{--mvc-primair:var(--_color---primary,#2f94ff);--mvc-accent:var(--_color---secondary,#fbf44e);--mvc-donker:var(--_color---dark-bg,#1f212e);--mvc-tekst:var(--_color---dark-text,#303557);--mvc-mut:var(--_color---black-lite,#979aab);--mvc-licht:var(--_color---gray-bg,#fcfcfd);--mvc-lijn:#e5e6ea;--mvc-groen:#1e8e3e;--mvc-groen-zacht:#e7f5ec;--mvc-oranje:#b26a00;--mvc-oranje-zacht:#fff4e0;--mvc-rood:#c5221f;--mvc-rood-zacht:#fdecea;--mvc-primair-zacht:#eaf4ff;
   font-family:Geist,system-ui,sans-serif;color:var(--mvc-tekst);font-size:16px;line-height:1.5;text-align:left;display:grid;gap:24px}
 .mvc *{box-sizing:border-box}
+.mvc [hidden]{display:none!important}
+.mvc select{appearance:auto;min-height:0;line-height:1.5}
 .mvc h3,.mvc h4,.mvc .mvc-kop{font-family:Manrope,system-ui,sans-serif;color:var(--mvc-tekst);letter-spacing:-.2px}
 .mvc-kaartje{background:#fff;border:1px solid var(--mvc-lijn);border-radius:16px;padding:28px}
 @media (max-width:600px){.mvc-kaartje{padding:20px;border-radius:12px}}
